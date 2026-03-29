@@ -178,8 +178,7 @@
     .zd-check-item{
       display:flex;
       align-items:center;
-      justify-content:space-between;
-      gap:12px;
+      gap:14px;
       min-height:76px;
       padding:16px;
       border:1px solid rgba(200,164,91,.35);
@@ -215,7 +214,7 @@
     }
 
     .zd-name{
-      font-size:29px;
+      font-size:31px;
       line-height:1.08;
       font-weight:900;
       letter-spacing:.01em;
@@ -226,26 +225,6 @@
     }
 
     .zd-name.bad{
-      color:var(--red);
-    }
-
-    .zd-status{
-      flex:0 0 auto;
-      white-space:nowrap;
-      font-size:15px;
-      font-weight:900;
-      padding:8px 12px;
-      border-radius:999px;
-      border:1px solid rgba(200,164,91,.35);
-      background:#0d0d0d;
-      color:#d2d2d2;
-    }
-
-    .zd-status.ok{
-      color:var(--green);
-    }
-
-    .zd-status.bad{
       color:var(--red);
     }
 
@@ -368,7 +347,6 @@
 
   <script>
   (function(){
-    /* ====== Exact dezelfde backend-bronnen als eerste app ====== */
     const CONFIG = {
       sheets:{
         checklistsJson:"https://script.google.com/macros/s/AKfycbw_Tn0z0s3AJ7CARzHt9sFy8CGhrCe_HzS9ao0KKDtgzq9TR_H-28WBss316I6PDcr7/exec",
@@ -603,7 +581,6 @@
         const done = !!c.done;
         const dotClass = done ? "ok" : "bad";
         const textClass = done ? "ok" : "bad";
-        const statusClass = done ? "ok" : "bad";
 
         const el = document.createElement("div");
         el.className = "zd-check-item";
@@ -611,9 +588,6 @@
           <div class="zd-check-left">
             <span class="zd-dot ${dotClass}"></span>
             <div class="zd-name ${textClass}">${displayChecklistName(c.name)}</div>
-          </div>
-          <div class="zd-status ${statusClass}">
-            ${done ? "Ingediend" : "Niet ingediend"}
           </div>
         `;
         wrap.appendChild(el);
@@ -660,7 +634,6 @@
 
       const actions = [];
 
-      /* Containers */
       let containers = [];
       if (containersData) {
         if (Array.isArray(containersData.items)) {
@@ -688,14 +661,12 @@
 
       containers.forEach(x=>actions.push({label:x, pending:false}));
 
-      /* Emballage */
       const emballage = EMBALLAGE_SCHEDULE[dow] ? [...EMBALLAGE_SCHEDULE[dow]] : [];
       if(dow===1 && isYellowCratesDay(ops)){
         emballage.push("Gele Zusje kratten klaarzetten");
       }
       emballage.forEach(x=>actions.push({label:x, pending:false}));
 
-      /* Bestellen */
       const todayOrders = state.ordersRules.filter(r=>(r.weekdays||[]).includes(dow)&&(!r.evenWeeks||even));
       if(!todayOrders.length){
         actions.push({label:"Geen bestellingen", pending:true});
