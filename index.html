@@ -1,705 +1,860 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <title>Digitale Reserveringslijst</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1920, initial-scale=1" />
+  <title>Zusje Roermond Dashboard</title>
   <style>
-    :root {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color-scheme: light;
+    :root{
+      --bg:#000000;
+      --panel:#0d0d0d;
+      --panel-2:#141414;
+      --line:#222222;
+      --text:#ffffff;
+      --muted:#9ca3af;
+      --ok:#22c55e;
+      --pending:#6b7280;
+      --alert:#f59e0b;
+      --danger:#ef4444;
     }
 
-    body {
-      margin: 0;
-      background: #f4f4f6;
-      color: #111827;
+    html, body {
+      height:100%;
+      margin:0;
+      background:#000;
+      overflow:hidden;
+      -webkit-text-size-adjust:100%;
+      text-size-adjust:100%;
+      font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+      color:var(--text);
     }
 
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      background: #111827;
-      color: #f9fafb;
-      padding: 0.75rem 1rem;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    #dashboard-shell{
+      position:fixed;
+      inset:0;
+      background:var(--bg);
+      overflow:hidden;
     }
 
-    header h1 {
-      margin: 0;
-      font-size: 1.1rem;
+    .zd-stage{
+      position:relative;
+      width:100%;
+      height:100%;
     }
 
-    header .subtitle {
-      font-size: 0.85rem;
-      opacity: 0.85;
+    .zd-frame{
+      position:absolute;
+      left:50%;
+      top:50%;
+      width:1920px;
+      height:1080px;
+      transform:translate(-50%, -50%) scale(1);
+      transform-origin:center center;
+      will-change:transform;
     }
 
-    main {
-      padding: 0.75rem;
-      max-width: 1100px;
-      margin: 0 auto;
+    .zd-wrap{
+      width:100%;
+      height:100%;
+      box-sizing:border-box;
+      padding:34px 40px 36px;
+      background:var(--bg);
+      color:var(--text);
+      display:flex;
+      flex-direction:column;
+      gap:30px;
     }
 
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      align-items: center;
-      margin-bottom: 0.75rem;
+    .zd-top{
+      display:grid;
+      grid-template-columns:1fr auto 1fr;
+      align-items:start;
+      min-height:180px;
     }
 
-    .file-label {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: #2563eb;
-      color: #fff;
-      padding: 0.5rem 0.9rem;
-      border-radius: 999px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      border: none;
-      white-space: nowrap;
+    .zd-date-left{
+      align-self:center;
+      justify-self:start;
     }
 
-    .file-label span.icon {
-      font-size: 1.1rem;
+    .zd-title{
+      font-size:28px;
+      font-weight:800;
+      letter-spacing:.04em;
+      color:#d1d5db;
+      text-transform:uppercase;
+      margin-bottom:10px;
     }
 
-    #file-input {
-      display: none;
+    .zd-sub{
+      font-size:22px;
+      color:var(--muted);
+      font-weight:600;
     }
 
-    .info-chip {
-      background: #e5e7eb;
-      color: #111827;
-      padding: 0.35rem 0.7rem;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      white-space: nowrap;
+    .zd-center-clock{
+      text-align:center;
+      align-self:start;
+      justify-self:center;
     }
 
-    .search-input {
-      flex: 1 1 140px;
-      min-width: 120px;
-      padding: 0.45rem 0.7rem;
-      border-radius: 999px;
-      border: 1px solid #d1d5db;
-      font-size: 0.9rem;
-      outline: none;
-      background: #fff;
+    .zd-clock{
+      font-size:124px;
+      line-height:.95;
+      font-weight:900;
+      letter-spacing:-0.04em;
+      font-variant-numeric:tabular-nums;
+      color:#fff;
     }
 
-    .search-input:focus {
-      border-color: #2563eb;
-      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+    .zd-date{
+      margin-top:10px;
+      font-size:28px;
+      color:#d1d5db;
+      font-weight:700;
+      text-transform:capitalize;
     }
 
-    .stats {
-      font-size: 0.9rem;
-      margin-bottom: 0.5rem;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      align-items: center;
+    .zd-top-right{
+      justify-self:end;
+      align-self:center;
+      text-align:right;
+      color:var(--muted);
+      font-size:22px;
+      font-weight:600;
     }
 
-    .stats strong {
-      margin-right: 0.25rem;
+    .zd-main{
+      display:grid;
+      grid-template-columns: 1.15fr 1.7fr 1.15fr;
+      gap:28px;
+      flex:1;
+      min-height:0;
     }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.2rem;
-      padding: 0.15rem 0.55rem;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      background: #e5e7eb;
-      color: #111827;
+    .zd-col{
+      display:flex;
+      flex-direction:column;
+      gap:28px;
+      min-height:0;
     }
 
-    .badge.badge-ok {
-      background: #dcfce7;
-      color: #166534;
+    .zd-card{
+      background:linear-gradient(180deg,var(--panel),var(--panel-2));
+      border:1px solid var(--line);
+      border-radius:28px;
+      padding:24px 24px 22px;
+      box-sizing:border-box;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+      box-shadow:0 12px 40px rgba(0,0,0,.35);
     }
 
-    /* Hoofd layout: lijst links, tafels rechts */
-    .layout {
-      display: flex;
-      gap: 0.75rem;
-      align-items: flex-start;
+    .zd-card-title{
+      font-size:30px;
+      font-weight:900;
+      letter-spacing:.01em;
+      color:#fff;
+      margin-bottom:18px;
     }
 
-    .list {
-      background: #ffffff;
-      border-radius: 0.75rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
-      flex: 2 1 0;
-      min-width: 0;
+    .zd-list{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      min-height:0;
+      overflow:auto;
     }
 
-    /* Reserveringsrijen */
-    .row {
-      display: grid;
-      grid-template-columns: minmax(0, 1.7fr) minmax(60px, 0.6fr) minmax(40px, 0.4fr);
-      gap: 0.35rem 0.75rem;
-      padding: 0.6rem 0.75rem;
-      border-bottom: 1px solid #e5e7eb;
-      align-items: center;
-      font-size: 0.9rem;
+    .zd-list::-webkit-scrollbar{
+      width:8px;
+    }
+    .zd-list::-webkit-scrollbar-thumb{
+      background:#222;
+      border-radius:999px;
     }
 
-    .row:last-child {
-      border-bottom: none;
+    .zd-item{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      padding:18px 18px;
+      border:1px solid #1f1f1f;
+      border-radius:18px;
+      background:#0a0a0a;
     }
 
-    .row-main {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      min-width: 0;
+    .zd-item-left{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      min-width:0;
+      flex:1;
     }
 
-    .row-name {
-      font-weight: 600;
-      font-size: 0.95rem;
-      cursor: pointer;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      overflow: hidden;
-      max-width: 100%;
+    .zd-dot{
+      width:12px;
+      height:12px;
+      border-radius:999px;
+      background:#ffffff;
+      flex:0 0 auto;
+      opacity:.9;
     }
 
-    .row-time {
-      font-variant-numeric: tabular-nums;
-      font-weight: 500;
+    .zd-dot.ok{ background:var(--ok); }
+    .zd-dot.pending{ background:#6b7280; }
+    .zd-dot.alert{ background:var(--alert); }
+    .zd-dot.danger{ background:var(--danger); }
+
+    .zd-name{
+      font-size:28px;
+      font-weight:800;
+      color:#fff;
+      line-height:1.15;
+      letter-spacing:.01em;
     }
 
-    .row-guests {
-      text-align: right;
-      font-variant-numeric: tabular-nums;
+    .zd-subname{
+      margin-top:4px;
+      font-size:18px;
+      font-weight:600;
+      color:var(--muted);
     }
 
-    .row-sub {
-      grid-column: 1 / -1;
-      font-size: 0.75rem;
-      color: #4b5563;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.35rem;
-      margin-left: 2rem;
+    .zd-status{
+      flex:0 0 auto;
+      font-size:18px;
+      font-weight:900;
+      border-radius:999px;
+      padding:10px 14px;
+      border:1px solid #262626;
+      white-space:nowrap;
     }
 
-    .row-sub span.label {
-      font-weight: 500;
+    .zd-status.ok{
+      color:#dcfce7;
+      background:rgba(34,197,94,.14);
+      border-color:rgba(34,197,94,.35);
     }
 
-    .row.arrived {
-      background: #ecfdf5;
+    .zd-status.pending{
+      color:#e5e7eb;
+      background:rgba(107,114,128,.14);
+      border-color:rgba(107,114,128,.35);
     }
 
-    .row.arrived .row-name {
-      text-decoration: line-through;
-      color: #166534;
+    .zd-status.alert{
+      color:#fef3c7;
+      background:rgba(245,158,11,.14);
+      border-color:rgba(245,158,11,.35);
     }
 
-    .checkbox-wrap {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+    .zd-status.danger{
+      color:#fee2e2;
+      background:rgba(239,68,68,.14);
+      border-color:rgba(239,68,68,.35);
     }
 
-    .checkbox-wrap input[type="checkbox"] {
-      width: 1.1rem;
-      height: 1.1rem;
-      cursor: pointer;
-      accent-color: #16a34a;
+    .zd-actions-card{
+      height:100%;
+      justify-content:flex-start;
     }
 
-    .table-input {
-      width: 3.2rem;
-      padding: 0.2rem 0.35rem;
-      border-radius: 0.375rem;
-      border: 1px solid #d1d5db;
-      font-size: 0.8rem;
-      text-align: center;
-      flex-shrink: 0;
-      background: #fff;
+    .zd-actions-list{
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      overflow:auto;
+      min-height:0;
     }
 
-    .table-input:focus {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    .zd-action{
+      display:flex;
+      align-items:center;
+      gap:18px;
+      padding:22px 24px;
+      border-radius:22px;
+      border:1px solid #1d1d1d;
+      background:#080808;
     }
 
-    .table-input::placeholder {
-      color: #9ca3af;
+    .zd-action .zd-dot{
+      width:14px;
+      height:14px;
     }
 
-    .empty-state {
-      padding: 1.5rem 1rem;
-      text-align: center;
-      font-size: 0.9rem;
-      color: #6b7280;
+    .zd-action-text{
+      font-size:34px;
+      font-weight:850;
+      line-height:1.15;
+      letter-spacing:.01em;
+      color:#fff;
     }
 
-    /* Tafeloverzicht rechts */
-    .tables-panel {
-      flex: 1 0 190px;
-      background: #ffffff;
-      border-radius: 0.75rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-      padding: 0.6rem 0.7rem 0.8rem;
-      position: sticky;
-      top: 4.5rem;
-      max-height: calc(100vh - 5rem);
-      overflow: auto;
-      font-size: 0.85rem;
+    .zd-empty{
+      color:var(--muted);
+      font-size:30px;
+      font-weight:700;
     }
 
-    .tables-title {
-      font-weight: 600;
-      margin-bottom: 0.35rem;
-    }
-
-    .tables-subtitle {
-      font-size: 0.75rem;
-      color: #6b7280;
-      margin-bottom: 0.5rem;
-    }
-
-    .tables-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.3rem;
-    }
-
-    .table-pill {
-      min-width: 2.6rem;
-      padding: 0.22rem 0.4rem;
-      border-radius: 999px;
-      border: 1px solid #d1d5db;
-      text-align: center;
-      font-variant-numeric: tabular-nums;
-      background: #f9fafb;
-      color: #111827;
-      font-size: 0.8rem;
-    }
-
-    .table-pill.used {
-      background: #fee2e2;
-      border-color: #b91c1c;
-      color: #b91c1c;
-      font-weight: 600;
-    }
-
-    @media (max-width: 900px) {
-      .layout {
-        flex-direction: column;
-      }
-      .tables-panel {
-        position: static;
-        max-height: none;
-        order: -1; /* tafels boven de lijst op kleine schermen */
-      }
-    }
-
-    @media (max-width: 640px) {
-      .row {
-        grid-template-columns: minmax(0, 1.8fr) minmax(52px, 0.6fr) minmax(36px, 0.4fr);
-        padding: 0.55rem 0.6rem;
-      }
-      .row-sub {
-        margin-left: 1.9rem;
-      }
-      header h1 {
-        font-size: 1rem;
-      }
+    .zd-note{
+      color:var(--muted);
+      font-size:18px;
+      margin-top:6px;
+      font-weight:600;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1 id="header-title">Digitale reserveringslijst</h1>
-    <div class="subtitle" id="header-subtitle">
-      Kies bovenaan een HTML bestand uit Contao om de lijst te laden.
-    </div>
-  </header>
+  <div id="dashboard-shell">
+    <div class="zd-stage">
+      <div class="zd-frame" id="zd-frame">
+        <div class="zd-wrap">
 
-  <main>
-    <div class="controls">
-      <label class="file-label" for="file-input">
-        <span class="icon">📄</span>
-        <span>HTML reserveringslijst kiezen</span>
-      </label>
-      <input id="file-input" type="file" accept=".html,text/html">
+          <div class="zd-top">
+            <div class="zd-date-left">
+              <div class="zd-title">Zusje Roermond Dashboard</div>
+              <div class="zd-sub">Horecadag t/m 04:00</div>
+            </div>
 
-      <div class="info-chip" id="file-name-chip">Geen bestand geselecteerd</div>
+            <div class="zd-center-clock">
+              <div class="zd-clock" id="zd-clock">--:--</div>
+              <div class="zd-date" id="zd-date">—</div>
+            </div>
 
-      <input
-        type="text"
-        id="search"
-        class="search-input"
-        placeholder="Zoek op naam, tijd, tafel, opmerking…">
-    </div>
+            <div class="zd-top-right">
+              Alleen relevante acties van vandaag
+            </div>
+          </div>
 
-    <div class="stats" id="stats">
-      <span><strong>0</strong> gasten in totaal</span>
-      <span class="badge badge-ok"><span>✅</span>0 aangekomen</span>
-    </div>
+          <div class="zd-main">
+            <!-- Links: Bediening -->
+            <div class="zd-col">
+              <section class="zd-card">
+                <div class="zd-card-title">Bediening</div>
+                <div class="zd-list" id="zd-serviceChecklists"></div>
+              </section>
+            </div>
 
-    <div class="layout">
-      <div id="list" class="list">
-        <div class="empty-state">
-          Nog geen reserveringen geladen.<br>
-          Download in Contao de printversie van de reserveringslijst en upload hier de HTML.
+            <!-- Midden: Acties -->
+            <div class="zd-col">
+              <section class="zd-card zd-actions-card">
+                <div class="zd-actions-list" id="zd-actionsList"></div>
+              </section>
+            </div>
+
+            <!-- Rechts: Keuken -->
+            <div class="zd-col">
+              <section class="zd-card">
+                <div class="zd-card-title">Keuken</div>
+                <div class="zd-list" id="zd-kitchenChecklists"></div>
+              </section>
+            </div>
+          </div>
+
         </div>
       </div>
-
-      <aside class="tables-panel" id="tables-panel">
-        <div class="tables-title">Tafeloverzicht</div>
-        <div class="tables-subtitle">
-          Tafels kleuren rood zodra je ze bij een reservering invult.
-        </div>
-        <div class="tables-grid" id="tables-grid">
-          <!-- wordt via JS gevuld -->
-        </div>
-      </aside>
     </div>
-  </main>
+  </div>
 
   <script>
-    const fileInput = document.getElementById('file-input');
-    const fileNameChip = document.getElementById('file-name-chip');
-    const headerTitle = document.getElementById('header-title');
-    const headerSubtitle = document.getElementById('header-subtitle');
-    const listEl = document.getElementById('list');
-    const statsEl = document.getElementById('stats');
-    const searchInput = document.getElementById('search');
-    const tablesGridEl = document.getElementById('tables-grid');
+  (function(){
+    const CONFIG = {
+      sheets:{
+        checklistsJson:"https://script.google.com/macros/s/AKfycbw_Tn0z0s3AJ7CARzHt9sFy8CGhrCe_HzS9ao0KKDtgzq9TR_H-28WBss316I6PDcr7/exec",
+        periodicJson:"https://script.google.com/macros/s/AKfycbxEDSHzBOrrYqkNOCQI6clM6DNuoge55tdATn1XNC63HT7GgPcsZF5AT3dwfaLjEUmV/exec",
+        containersJson:"https://script.google.com/macros/s/AKfycbwPQ1WsRqrJmRuYD8bL6kz5H5sSDNcBsIa0z-WW4hain7fkVhM6HIUQI3DHyhpn-C1zHQ/exec"
+      },
+      refreshMs:15000
+    };
 
-    let reservations = [];
-    let filterText = '';
-    let currentDateKey = '';
+    const EMBALLAGE_SCHEDULE = {
+      0: ["Bidfood emballage klaarzetten"],
+      3: ["Bidfood emballage klaarzetten"],
+      5: ["Bidfood emballage klaarzetten"]
+    };
 
-    fileInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+    const FALLBACK_CONTAINERS = {
+      0: ["Restafval containers klaarzetten"],
+      1: ["Glas containers klaarzetten"],
+      2: ["Restafval containers klaarzetten"],
+      3: [],
+      4: ["Papier container klaarzetten"],
+      5: [],
+      6: []
+    };
 
-      fileNameChip.textContent = file.name;
+    const THURSDAY_PLASTIC_LABEL = "Plastic containers klaarzetten";
+    const YELLOW_CRATES_START = "2025-11-17";
 
-      const text = await file.text();
-      parseReservationHtml(text);
-      render();
+    const state = {
+      checklists: [],
+      periodicTasks: [],
+      ordersRules: [
+        {vendor:"Bidfood",weekdays:[2],deadline:"00:00"},
+        {vendor:"Bubbels",weekdays:[3],deadline:"23:00",evenWeeks:true},
+        {vendor:"Zusje Kantoor",weekdays:[3],deadline:"23:00",evenWeeks:true},
+        {vendor:"Bidfood",weekdays:[4],deadline:"00:00"},
+        {vendor:"Bidfood",weekdays:[6],deadline:"00:00"}
+      ]
+    };
+
+    let containersData = null;
+
+    const $ = sel => document.querySelector(sel);
+    const pad = n => String(n).padStart(2,"0");
+
+    const getOpsDate = (d)=>{
+      const x = new Date(d || Date.now());
+      if (x.getHours() < 4) x.setDate(x.getDate() - 1);
+      return x;
+    };
+
+    const fmtDutchDate = d => d.toLocaleDateString("nl-NL",{
+      weekday:"long",
+      day:"2-digit",
+      month:"long"
     });
 
-    searchInput.addEventListener('input', (e) => {
-      filterText = e.target.value.toLowerCase();
-      render();
-    });
+    const weekNumber = d=>{
+      const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      const dn = (t.getUTCDay()+6)%7;
+      t.setUTCDate(t.getUTCDate()-dn+3);
+      const fT = new Date(Date.UTC(t.getUTCFullYear(),0,4));
+      return 1 + Math.round(((t-fT)/86400000 - 3 + ((fT.getUTCDay()+6)%7))/7);
+    };
 
-    function parseReservationHtml(html) {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
+    const isEvenWeek = d => weekNumber(d)%2===0;
 
-      // Haal datum / titel uit h1, bijv. "Reserveringen voor ZROE op 2025-11-23"
-      const h1 = doc.querySelector('h1');
-      let dateText = '';
-      if (h1 && h1.textContent) {
-        headerTitle.textContent = h1.textContent.trim();
-        const m = h1.textContent.match(/op\s+(\d{4}-\d{2}-\d{2})/);
-        if (m) {
-          dateText = m[1];
-        }
-      } else {
-        headerTitle.textContent = 'Digitale reserveringslijst';
+    const opsDateStrToday = ()=>{
+      const d = getOpsDate(new Date());
+      return d.toISOString().slice(0,10);
+    };
+
+    const ymdInAmsterdam = (dateLike)=>{
+      const tz="Europe/Amsterdam";
+      if(!dateLike) return null;
+      if(typeof dateLike==="string" && /^\d{4}-\d{2}-\d{2}/.test(dateLike)){
+        return dateLike.slice(0,10);
       }
+      const d = new Date(dateLike);
+      if(isNaN(d)) return null;
 
-      currentDateKey = dateText || 'onbekende-datum';
-      headerSubtitle.textContent = dateText
-        ? 'Datum: ' + dateText + ' – vink gasten af zodra ze binnen zijn.'
-        : 'Vink gasten af zodra ze binnen zijn.';
+      const parts = new Intl.DateTimeFormat("nl-NL",{
+        timeZone: tz,
+        year:"numeric",
+        month:"2-digit",
+        day:"2-digit"
+      }).formatToParts(d);
 
-      const rows = Array.from(doc.querySelectorAll('tbody tr'));
-      reservations = rows.map((tr) => {
-        const tds = tr.querySelectorAll('td');
-        const name = (tds[0]?.textContent || '').trim();
-        const time = (tds[1]?.textContent || '').trim();
-        const guests = parseInt((tds[2]?.textContent || '0').trim(), 10) || 0;
-        let table = (tds[3]?.textContent || '').trim();
-        const remarksHtml = (tds[4]?.innerHTML || '').trim();
-        const onAccount = (tds[5]?.textContent || '').trim();
+      let y,m,da;
+      for(const p of parts){
+        if(p.type==="year") y=p.value;
+        else if(p.type==="month") m=p.value;
+        else if(p.type==="day") da=p.value;
+      }
+      return (y && m && da) ? `${y}-${m}-${da}` : null;
+    };
 
-        const id = `${currentDateKey}|${name}|${time}`;
-        const arrived = !!getArrivedState(id);
-
-        const savedTable = getTableState(id);
-        if (savedTable !== null) {
-          table = savedTable;
-        }
-
-        return {
-          id,
-          name,
-          time,
-          guests,
-          table,
-          remarksHtml,
-          onAccount,
-          arrived
-        };
-      });
+    function normalizeText(str){
+      return String(str || "")
+        .toLowerCase()
+        .replace(/\s+/g," ")
+        .trim();
     }
 
-    function getArrivedState(id) {
-      try {
-        const key = 'reslist-arrived-' + id;
-        return localStorage.getItem(key) === '1';
-      } catch (_) {
-        return false;
+    function classifyChecklist(name){
+      const n = normalizeText(name);
+
+      if (
+        n.includes("keuken") ||
+        n.includes("spoel") ||
+        n.includes("bar") ||
+        n.includes("kok") ||
+        n.includes("sluit keuken") ||
+        n.includes("sluitlijst keuken") ||
+        n.includes("sluitlijst spoel")
+      ){
+        return "kitchen";
       }
+
+      if (
+        n.includes("open") ||
+        n.includes("bediening onder") ||
+        n.includes("beneden") ||
+        n.includes("bediening boven") ||
+        n.includes("boven") ||
+        n.includes("run")
+      ){
+        return "service";
+      }
+
+      return "service";
     }
 
-    function setArrivedState(id, value) {
-      try {
-        const key = 'reslist-arrived-' + id;
-        if (value) {
-          localStorage.setItem(key, '1');
-        } else {
-          localStorage.removeItem(key);
+    function displayChecklistName(name){
+      const n = normalizeText(name);
+
+      if (n.includes("open")) return "Openen";
+      if (n.includes("bediening onder")) return "Bediening onder";
+      if (n.includes("bediening boven")) return "Bediening boven";
+      if (n === "beneden" || n.includes("sluitlijst beneden")) return "Bediening onder";
+      if (n === "boven" || n.includes("sluitlijst boven")) return "Bediening boven";
+      if (n.includes("run")) return "Run";
+      if (n.includes("sluitlijst keuken")) return "Sluitlijst keuken";
+      if (n.includes("sluit keuken")) return "Sluitlijst keuken";
+      if (n.includes("sluitlijst spoel")) return "Sluitlijst spoel";
+      if (n.includes("spoel")) return "Spoelkeuken";
+      if (n.includes("keuken")) return "Keuken";
+      if (n.includes("bar beneden")) return "Bar beneden";
+      if (n.includes("bar boven")) return "Bar boven";
+
+      return name;
+    }
+
+    async function fetchChecklists(){
+      try{
+        const r = await fetch(CONFIG.sheets.checklistsJson,{cache:"no-store"});
+        if(r.ok){
+          const j = await r.json();
+          if(Array.isArray(j.items)){
+            state.checklists = j.items
+              .map(it=>({
+                name:String(it.name || "").trim(),
+                done:!!it.done
+              }))
+              .filter(x=>x.name);
+          }
         }
-      } catch (_) {
-        // localStorage kan uitstaan; negeer
+      }catch(e){
+        console.warn("Checklist fetch fail", e);
       }
     }
 
-    function getTableState(id) {
-      try {
-        const key = 'reslist-table-' + id;
-        const v = localStorage.getItem(key);
-        return v === null ? null : v;
-      } catch (_) {
+    async function fetchPeriodic(){
+      try{
+        const u = CONFIG.sheets.periodicJson;
+        const sep = u.includes("?") ? "&" : "?";
+        const r = await fetch(u + sep + "tz=Europe/Amsterdam",{cache:"no-store"});
+        if(r.ok){
+          const j = await r.json();
+          let items = (j && j.ok && Array.isArray(j.items)) ? j.items : [];
+          const todayStr = opsDateStrToday();
+
+          items = items.filter(ev=>{
+            const s = ev.start || ev.startTime || ev.date || ev.dateISO;
+            if(!s) return true;
+            const evStr = ymdInAmsterdam(s);
+            if(!evStr) return false;
+            return evStr === todayStr;
+          });
+
+          state.periodicTasks = items.map(ev=>({
+            title: ev.title,
+            allDay: !!ev.allDay,
+            start: ev.start || ev.startTime || ev.date || ev.dateISO || null
+          }));
+        }
+      }catch(e){
+        console.warn("Periodic fail", e);
+      }
+    }
+
+    async function fetchContainers(){
+      const url = CONFIG.sheets.containersJson;
+      if(!url) return null;
+      try{
+        const sep = url.includes("?") ? "&" : "?";
+        const r = await fetch(url + sep + "tz=Europe/Amsterdam",{cache:"no-store"});
+        if(!r.ok) throw new Error("HTTP " + r.status);
+        return await r.json();
+      }catch(e){
+        console.warn("Containers endpoint faalde:", e);
         return null;
       }
     }
 
-    function setTableState(id, value) {
-      try {
-        const key = 'reslist-table-' + id;
-        if (value && value.trim()) {
-          localStorage.setItem(key, value.trim());
-        } else {
-          localStorage.removeItem(key);
-        }
-      } catch (_) {
-        // negeren
-      }
+    async function loadAll(){
+      const [a,b,c] = await Promise.allSettled([
+        fetchChecklists(),
+        fetchPeriodic(),
+        fetchContainers()
+      ]);
+      containersData = (c && c.status==="fulfilled") ? c.value : null;
+      renderAll();
     }
 
-    function collectUsedTables() {
-      const set = new Set();
-      reservations.forEach((r) => {
-        const raw = (r.table || '').trim();
-        if (!raw) return;
-        // Ondersteun eventueel "12,13" of "12 / 13"
-        raw.split(/[,/ ]+/).forEach((part) => {
-          const t = part.trim();
-          if (t) set.add(t);
-        });
-      });
-      return set;
+    function renderHeader(){
+      const now = new Date();
+      const ops = getOpsDate(now);
+      $("#zd-clock").textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+      $("#zd-date").textContent = fmtDutchDate(ops);
     }
 
-    function renderTablesPanel() {
-      // Alle tafels 1–14 en 20–58
-      const numbers = [];
-      for (let i = 1; i <= 14; i++) numbers.push(i);
-      for (let i = 20; i <= 58; i++) numbers.push(i);
+    function renderChecklistGroup(targetId, items){
+      const wrap = document.getElementById(targetId);
+      wrap.innerHTML = "";
 
-      const used = collectUsedTables();
-
-      tablesGridEl.innerHTML = '';
-      numbers.forEach((num) => {
-        const pill = document.createElement('div');
-        pill.className = 'table-pill';
-        const asString = String(num);
-        if (used.has(asString)) {
-          pill.classList.add('used');
-        }
-        pill.textContent = asString;
-        tablesGridEl.appendChild(pill);
-      });
-    }
-
-    function render() {
-      if (!reservations.length) {
-        listEl.innerHTML = `
-          <div class="empty-state">
-            Nog geen reserveringen geladen.<br>
-            Download in Contao de printversie van de reserveringslijst en upload hier de HTML.
+      if(!items.length){
+        wrap.innerHTML = `
+          <div class="zd-item">
+            <div class="zd-item-left">
+              <span class="zd-dot pending"></span>
+              <div>
+                <div class="zd-name">Geen checklists gevonden</div>
+              </div>
+            </div>
           </div>
         `;
-        statsEl.innerHTML = `
-          <span><strong>0</strong> gasten in totaal</span>
-          <span class="badge badge-ok"><span>✅</span>0 aangekomen</span>
-        `;
-        renderTablesPanel();
         return;
       }
 
-      const filtered = reservations.filter((r) => {
-        if (!filterText) return true;
-        const blob = [
-          r.name,
-          r.time,
-          String(r.guests),
-          r.table,
-          stripHtml(r.remarksHtml),
-          r.onAccount
-        ].join(' ').toLowerCase();
-        return blob.includes(filterText);
-      });
-
-      const totalGuests = reservations.reduce((sum, r) => sum + r.guests, 0);
-      const arrivedGuests = reservations
-        .filter((r) => r.arrived)
-        .reduce((sum, r) => sum + r.guests, 0);
-
-      statsEl.innerHTML = `
-        <span><strong>${totalGuests}</strong> gasten in totaal</span>
-        <span class="badge badge-ok"><span>✅</span>${arrivedGuests} aangekomen</span>
-        <span class="badge"><span>👥</span>${filtered.length} reserveringen zichtbaar</span>
-      `;
-
-      listEl.innerHTML = '';
-      if (!filtered.length) {
-        listEl.innerHTML = `
-          <div class="empty-state">
-            Geen reserveringen gevonden met deze zoekopdracht.
+      items.forEach(c=>{
+        const el = document.createElement("div");
+        el.className = "zd-item";
+        el.innerHTML = `
+          <div class="zd-item-left">
+            <span class="zd-dot ${c.done ? "ok" : "pending"}"></span>
+            <div>
+              <div class="zd-name">${displayChecklistName(c.name)}</div>
+            </div>
+          </div>
+          <div class="zd-status ${c.done ? "ok" : "pending"}">
+            ${c.done ? "Ingediend" : "Nog niet"}
           </div>
         `;
-        renderTablesPanel();
+        wrap.appendChild(el);
+      });
+    }
+
+    function renderChecklists(){
+      const service = [];
+      const kitchen = [];
+
+      state.checklists.forEach(c=>{
+        const type = classifyChecklist(c.name);
+        if(type === "kitchen") kitchen.push(c);
+        else service.push(c);
+      });
+
+      const preferredServiceOrder = ["Openen","Bediening onder","Bediening boven","Run"];
+      service.sort((a,b)=>{
+        const aa = preferredServiceOrder.indexOf(displayChecklistName(a.name));
+        const bb = preferredServiceOrder.indexOf(displayChecklistName(b.name));
+        return (aa === -1 ? 999 : aa) - (bb === -1 ? 999 : bb);
+      });
+
+      renderChecklistGroup("zd-serviceChecklists", service);
+      renderChecklistGroup("zd-kitchenChecklists", kitchen);
+    }
+
+    function buildActions(){
+      const actions = [];
+      const now = new Date();
+      const ops = getOpsDate(now);
+      const dow = ops.getDay();
+      const even = isEvenWeek(ops);
+      const todayStr = opsDateStrToday();
+
+      let containers = [];
+      if (containersData) {
+        if (Array.isArray(containersData.items)) {
+          containers = containersData.items
+            .filter(it=>{
+              const s = it.start || it.startTime || it.date || it.dateISO;
+              if(!s) return true;
+              const evStr = ymdInAmsterdam(s);
+              if(!evStr) return false;
+              return evStr === todayStr;
+            })
+            .map(it=> String(it.title || it.name || "").trim())
+            .filter(Boolean);
+        } else if (Array.isArray(containersData.containers)) {
+          containers = containersData.containers.slice();
+        }
+      }
+
+      if (containers.length === 0) {
+        containers = FALLBACK_CONTAINERS[dow] ? [...FALLBACK_CONTAINERS[dow]] : [];
+        if (dow === 4 && even) {
+          if(!containers.includes(THURSDAY_PLASTIC_LABEL)) containers.push(THURSDAY_PLASTIC_LABEL);
+        }
+      }
+
+      containers.forEach(x=>{
+        actions.push({
+          type:"action",
+          label:x
+        });
+      });
+
+      const emballage = EMBALLAGE_SCHEDULE[dow] ? [...EMBALLAGE_SCHEDULE[dow]] : [];
+      if(dow === 1 && isYellowCratesDay(ops)){
+        emballage.push("Gele Zusje kratten klaarzetten");
+      }
+
+      emballage.forEach(x=>{
+        actions.push({
+          type:"action",
+          label:x
+        });
+      });
+
+      const todayOrders = state.ordersRules.filter(r =>
+        (r.weekdays || []).includes(dow) && (!r.evenWeeks || even)
+      );
+
+      if(todayOrders.length){
+        todayOrders.forEach(r=>{
+          let limit = new Date(ops);
+          if(r.deadline === "00:00"){
+            limit.setDate(limit.getDate()+1);
+            limit.setHours(0,0,0,0);
+          }else{
+            const [h,m] = (r.deadline || "23:59").split(":").map(Number);
+            limit.setHours(h, m || 0, 0, 0);
+          }
+
+          const diff = Math.round((limit - now) / 60000);
+          let urgency = "normal";
+          let label = `${r.vendor} bestellen`;
+
+          if(diff < 0){
+            urgency = "danger";
+            label = `${r.vendor} bestellen — te laat`;
+          }else if(diff <= 60){
+            urgency = "alert";
+            label = `${r.vendor} bestellen — binnen ${diff} min`;
+          }else{
+            label = `${r.vendor} bestellen`;
+          }
+
+          actions.push({
+            type:"order",
+            label,
+            urgency
+          });
+        });
+      } else {
+        actions.push({
+          type:"empty-order",
+          label:"Geen bestellingen"
+        });
+      }
+
+      const periodic = state.periodicTasks || [];
+      periodic.forEach(x=>{
+        actions.push({
+          type:"note",
+          label:x.title
+        });
+      });
+
+      return actions;
+    }
+
+    function renderActions(){
+      const wrap = $("#zd-actionsList");
+      wrap.innerHTML = "";
+
+      const actions = buildActions();
+
+      if(!actions.length){
+        wrap.innerHTML = `<div class="zd-empty">Geen acties voor vandaag</div>`;
         return;
       }
 
-      const frag = document.createDocumentFragment();
+      actions.forEach(a=>{
+        const el = document.createElement("div");
+        el.className = "zd-action";
 
-      filtered.forEach((r) => {
-        const row = document.createElement('div');
-        row.className = 'row' + (r.arrived ? ' arrived' : '');
+        let dotClass = "pending";
+        if(a.type === "order" && a.urgency === "alert") dotClass = "alert";
+        if(a.type === "order" && a.urgency === "danger") dotClass = "danger";
+        if(a.type === "empty-order") dotClass = "pending";
+        if(a.type === "action" || a.type === "note") dotClass = "ok";
 
-        const main = document.createElement('div');
-        main.className = 'row-main';
-
-        const checkboxWrap = document.createElement('div');
-        checkboxWrap.className = 'checkbox-wrap';
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.checked = r.arrived;
-        cb.addEventListener('change', () => {
-          r.arrived = cb.checked;
-          setArrivedState(r.id, r.arrived);
-          render(); // opnieuw tekenen voor groene achtergrond / stats
-        });
-        checkboxWrap.appendChild(cb);
-
-        const nameEl = document.createElement('div');
-        nameEl.className = 'row-name';
-        nameEl.textContent = r.name || '(Naam onbekend)';
-
-        // Klikken op naam = zelfde als vinkje
-        nameEl.addEventListener('click', () => {
-          cb.checked = !cb.checked;
-          r.arrived = cb.checked;
-          setArrivedState(r.id, r.arrived);
-          render();
-        });
-
-        const tableInput = document.createElement('input');
-        tableInput.type = 'text';
-        tableInput.inputMode = 'numeric';
-        tableInput.pattern = '[0-9]*';
-        tableInput.className = 'table-input';
-        tableInput.placeholder = 'Tafel';
-        tableInput.value = r.table || '';
-
-        tableInput.addEventListener('input', () => {
-          r.table = tableInput.value.trim();
-          setTableState(r.id, r.table);
-          render(); // tafelpillen en lijst updaten
-        });
-
-        main.appendChild(checkboxWrap);
-        main.appendChild(nameEl);
-        main.appendChild(tableInput);
-
-        const timeEl = document.createElement('div');
-        timeEl.className = 'row-time';
-        timeEl.textContent = r.time || '-';
-
-        const guestsEl = document.createElement('div');
-        guestsEl.className = 'row-guests';
-        guestsEl.textContent = r.guests ? r.guests + 'p' : '-';
-
-        const sub = document.createElement('div');
-        sub.className = 'row-sub';
-
-        if (r.table) {
-          const span = document.createElement('span');
-          span.innerHTML = '<span class="label">Tafel:</span> ' + escapeHtml(r.table);
-          sub.appendChild(span);
-        }
-
-        if (r.remarksHtml) {
-          const span = document.createElement('span');
-          span.innerHTML = '<span class="label">Opmerking:</span> ' + r.remarksHtml;
-          sub.appendChild(span);
-        }
-
-        if (r.onAccount) {
-          const span = document.createElement('span');
-          span.innerHTML = '<span class="label">Op rekening:</span> ' + escapeHtml(r.onAccount);
-          sub.appendChild(span);
-        }
-
-        row.appendChild(main);
-        row.appendChild(timeEl);
-        row.appendChild(guestsEl);
-
-        if (sub.childNodes.length) {
-          row.appendChild(sub);
-        }
-
-        frag.appendChild(row);
+        el.innerHTML = `
+          <span class="zd-dot ${dotClass}"></span>
+          <div class="zd-action-text">${a.label}</div>
+        `;
+        wrap.appendChild(el);
       });
-
-      listEl.appendChild(frag);
-      renderTablesPanel();
     }
 
-    function stripHtml(html) {
-      const tmp = document.createElement('div');
-      tmp.innerHTML = html;
-      return tmp.textContent || tmp.innerText || '';
+    function isYellowCratesDay(ops){
+      const start = new Date(YELLOW_CRATES_START + "T00:00:00");
+      const msPerDay = 24*60*60*1000;
+      const opsMid = new Date(ops);
+      opsMid.setHours(0,0,0,0);
+      const daysDiff = Math.floor((opsMid - start.getTime()) / msPerDay);
+      if(daysDiff < 0) return false;
+      const weeksDiff = Math.floor(daysDiff / 7);
+      return weeksDiff % 2 === 0;
     }
 
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+    function renderAll(){
+      renderHeader();
+      renderChecklists();
+      renderActions();
+      fitFrame();
     }
 
-    // Init: leeg tafelpaneel tonen
-    renderTablesPanel();
+    const FRAME_W = 1920;
+    const FRAME_H = 1080;
+    const SAFE_MARGIN_PX = 8;
+
+    function fitFrame(){
+      const shell = document.getElementById("dashboard-shell");
+      const frame = document.getElementById("zd-frame");
+
+      const viewW = Math.max(1, window.innerWidth || shell.clientWidth || document.documentElement.clientWidth);
+      const viewH = Math.max(1, window.innerHeight || shell.clientHeight || document.documentElement.clientHeight);
+
+      const base = Math.min(
+        (viewW - SAFE_MARGIN_PX) / FRAME_W,
+        (viewH - SAFE_MARGIN_PX) / FRAME_H
+      );
+
+      const EXTRA_SHRINK = 0.99;
+      const scale = base * EXTRA_SHRINK;
+
+      frame.style.transform = `translate(-50%, -50%) scale(${scale})`;
+    }
+
+    async function toggleFS(){
+      try{
+        if(document.fullscreenElement){
+          await document.exitFullscreen();
+        }else{
+          const el = document.getElementById("dashboard-shell");
+          if(el.requestFullscreen) await el.requestFullscreen();
+          else if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+        }
+      }catch(_){}
+    }
+
+    document.addEventListener("keydown", (e)=>{
+      if((e.key || "").toLowerCase() === "f") toggleFS();
+    });
+
+    window.addEventListener("resize", fitFrame);
+    window.addEventListener("orientationchange", fitFrame);
+    document.addEventListener("fullscreenchange", fitFrame);
+    document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) fitFrame(); });
+    if(document.fonts && document.fonts.ready){
+      document.fonts.ready.finally(fitFrame);
+    }
+
+    fitFrame();
+    renderHeader();
+    loadAll();
+
+    setInterval(()=>{ renderHeader(); fitFrame(); },1000);
+    setInterval(()=>{ loadAll(); }, CONFIG.refreshMs);
+  })();
   </script>
 </body>
 </html>
