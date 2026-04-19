@@ -73,18 +73,15 @@
     flex:0 0 auto;
   }
 
-  .title{
-    font-weight:800;
-    font-size:clamp(14px, 2.2vw, 18px);
-    flex:1;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    letter-spacing:.02em;
-    background:linear-gradient(180deg, #fff 0%, #a8a8a8 120%);
-    -webkit-background-clip:text;
-    background-clip:text;
-    -webkit-text-fill-color:transparent;
+  .app-logo{
+    height:clamp(28px, 5.5vw, 44px);
+    width:auto;
+    max-width:40vw;
+    display:block;
+    flex:0 0 auto;
+    object-fit:contain;
+    user-select:none;
+    -webkit-user-drag:none;
   }
 
   main{
@@ -1099,7 +1096,7 @@
 
 <body>
 <header>
-  <div class="title" id="appTitle">Tafeloverzicht</div>
+  <img class="app-logo" id="appLogo" src="logo.png" alt="" />
   <div class="view-switch" id="viewSwitch">
     <button class="vs-btn" data-view="reservations">Reserveringen</button>
     <button class="vs-btn" data-view="tables">Tafels</button>
@@ -1435,7 +1432,6 @@ const alertTextEl = document.getElementById('alertText');
 const statusBarEl = document.getElementById('statusBar');
 
 /* Reservations view elements */
-const appTitleEl = document.getElementById('appTitle');
 const viewSwitchEl = document.getElementById('viewSwitch');
 const tablesViewEl = document.getElementById('tablesView');
 const reservationsViewEl = document.getElementById('reservationsView');
@@ -2578,7 +2574,6 @@ function setView(view){
   viewSwitchEl.querySelectorAll('.vs-btn').forEach(b=>{
     b.classList.toggle('active', b.dataset.view === view);
   });
-  appTitleEl.textContent = view === 'reservations' ? 'Reserveringen' : 'Tafeloverzicht';
 
   if(view === 'reservations'){
     renderReservationsView();
