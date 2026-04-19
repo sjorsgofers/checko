@@ -545,6 +545,325 @@
   }
   .input-hint{ font-size:12px; color:var(--muted) }
 
+  /* ===== View switcher ===== */
+  .view-switch{
+    display:flex;
+    background:#0f0f0f;
+    border:1px solid #262626;
+    border-radius:999px;
+    padding:3px;
+    gap:2px;
+  }
+  .vs-btn{
+    appearance:none;
+    background:transparent;
+    border:0;
+    color:var(--muted);
+    padding:7px 14px;
+    font-weight:800;
+    font-size:clamp(12px, 1.8vw, 14px);
+    border-radius:999px;
+    cursor:pointer;
+    letter-spacing:.02em;
+    transition:all .15s;
+  }
+  .vs-btn.active{
+    background:linear-gradient(180deg, var(--gold) 0%, var(--gold-dim) 100%);
+    color:#0b0b0b;
+    box-shadow:0 2px 8px rgba(200,164,91,.3);
+  }
+
+  .view{ display:none; flex-direction:column; gap:8px; flex:1 1 auto; min-height:0; }
+  .view.active{ display:flex; }
+
+  /* ===== Reserveringen view ===== */
+  .res-toolbar{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex:0 0 auto;
+    flex-wrap:wrap;
+  }
+  .res-toolbar .btn{ padding:9px 14px; font-size:15px; min-width:42px; }
+  .res-spacer{ flex:1 1 auto; }
+
+  .date-display{
+    font-weight:900;
+    font-size:clamp(14px, 2.2vw, 17px);
+    color:var(--gold);
+    letter-spacing:.02em;
+    padding:0 6px;
+    min-width:130px;
+    text-align:center;
+  }
+
+  .res-section{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    flex:0 0 auto;
+    min-height:0;
+  }
+  .res-section.res-main{ flex:1 1 auto; min-height:0; }
+
+  .res-section-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:4px 10px;
+    background:linear-gradient(180deg, rgba(200,164,91,.08) 0%, rgba(200,164,91,.02) 100%);
+    border:1px solid rgba(200,164,91,.3);
+    border-radius:8px;
+  }
+  .res-section-title{
+    font-weight:900;
+    font-size:clamp(12px, 1.8vw, 14px);
+    color:var(--gold);
+    letter-spacing:.06em;
+    text-transform:uppercase;
+  }
+  .res-section-sub{
+    font-size:clamp(11px, 1.6vw, 13px);
+    color:var(--muted);
+    font-weight:700;
+  }
+
+  /* Vrije tafels grid */
+  .free-tables{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(58px, 1fr));
+    gap:6px;
+    padding:2px;
+    max-height:28vh;
+    overflow-y:auto;
+  }
+  .free-tile{
+    appearance:none;
+    border:1.5px solid rgba(16,185,129,.45);
+    background:linear-gradient(180deg, rgba(16,185,129,.12) 0%, rgba(16,185,129,.04) 100%);
+    color:#34d399;
+    border-radius:10px;
+    padding:10px 6px 8px;
+    cursor:pointer;
+    letter-spacing:-.02em;
+    transition:transform .08s;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+    position:relative;
+  }
+  .free-tile:active{ transform:scale(.94); }
+  .free-tile .tnum{
+    font-weight:900;
+    font-size:clamp(18px, 3vw, 24px);
+    font-variant-numeric:tabular-nums;
+    line-height:1;
+    color:#fff;
+  }
+  .free-tile .cap{
+    display:inline-flex;
+    align-items:center;
+    gap:3px;
+    font-size:clamp(11px, 1.7vw, 13px);
+    font-weight:800;
+    color:#34d399;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:0;
+    opacity:.95;
+  }
+  .free-tile .cap::before{
+    content:"";
+    width:12px; height:12px;
+    background:currentColor;
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M12 12a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0v1H5v-1z'/></svg>") center/contain no-repeat;
+            mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M12 12a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0v1H5v-1z'/></svg>") center/contain no-repeat;
+    opacity:.9;
+  }
+
+  /* Arrived toggle + panel */
+  .arrived-toggle{
+    appearance:none;
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    padding:8px 12px;
+    background:linear-gradient(180deg, #141414 0%, #0f0f0f 100%);
+    border:1px solid #262626;
+    border-radius:10px;
+    color:var(--muted);
+    font-weight:800;
+    font-size:13px;
+    cursor:pointer;
+    letter-spacing:.02em;
+    flex:0 0 auto;
+  }
+  .arrived-toggle[aria-expanded="true"] .arrived-chev{ transform:rotate(180deg); }
+  .arrived-chev{ transition:transform .15s; display:inline-block; }
+  .arrived-panel{
+    display:flex; flex-direction:column; gap:6px;
+    max-height:30vh; overflow-y:auto;
+    flex:0 0 auto;
+  }
+
+  /* Reserveringen lijst */
+  .res-list{
+    flex:1 1 auto;
+    min-height:0;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    padding:2px;
+  }
+  .res-row{
+    display:grid;
+    grid-template-columns:64px 1fr auto;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+    background:linear-gradient(180deg, #161616 0%, #0f0f0f 100%);
+    border:1px solid #262626;
+    border-radius:12px;
+    transition:all .2s;
+  }
+  .res-row.arrived{
+    background:linear-gradient(180deg, rgba(16,185,129,.10) 0%, rgba(16,185,129,.02) 100%);
+    border-color:rgba(16,185,129,.45);
+    opacity:.92;
+  }
+  .res-row.arrived .res-time{ color:#34d399; }
+
+  .res-time{
+    font-weight:900;
+    font-size:clamp(16px, 2.6vw, 20px);
+    color:#fff;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:-.02em;
+  }
+  .res-body{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    min-width:0;
+  }
+  .res-name{
+    font-weight:800;
+    font-size:clamp(14px, 2.2vw, 16px);
+    color:#fff;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .res-meta{
+    font-size:clamp(11px, 1.7vw, 13px);
+    color:var(--muted);
+    font-weight:600;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .res-meta .res-tables{
+    color:var(--gold);
+    font-weight:800;
+  }
+  .res-note-bubble{
+    display:inline-block;
+    padding:1px 7px;
+    border-radius:999px;
+    background:rgba(245,158,11,.15);
+    color:#fbbf24;
+    font-size:11px;
+    font-weight:700;
+    margin-top:2px;
+  }
+
+  .res-arrive{
+    appearance:none;
+    border:1.5px solid var(--gold);
+    background:linear-gradient(180deg, rgba(200,164,91,.12) 0%, rgba(200,164,91,.02) 100%);
+    color:var(--gold);
+    border-radius:10px;
+    padding:10px 14px;
+    font-weight:900;
+    font-size:clamp(13px, 2vw, 15px);
+    cursor:pointer;
+    letter-spacing:.02em;
+    white-space:nowrap;
+    transition:transform .08s;
+  }
+  .res-arrive:active{ transform:scale(.95); }
+  .res-row.arrived .res-arrive{
+    background:linear-gradient(180deg, var(--run) 0%, var(--run-2) 100%);
+    border-color:var(--run);
+    color:#fff;
+  }
+
+  .res-empty{
+    text-align:center;
+    color:var(--muted);
+    font-size:14px;
+    padding:20px;
+    font-weight:600;
+  }
+
+  /* Bezette tafels lijst */
+  .busy-list{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));
+    gap:6px;
+    padding:2px;
+    max-height:22vh;
+    overflow-y:auto;
+  }
+  .busy-tile{
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    align-items:center;
+    gap:8px;
+    padding:8px 10px;
+    border-radius:10px;
+    border:1px solid transparent;
+    color:#fff;
+    font-weight:700;
+  }
+  .busy-tile .bt-num{
+    font-weight:900;
+    font-size:16px;
+    font-variant-numeric:tabular-nums;
+  }
+  .busy-tile .bt-status{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    font-weight:800;
+    opacity:.9;
+  }
+  .busy-tile .bt-timer{
+    font-family:"SF Mono","Menlo","Consolas",monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:12px;
+    font-weight:800;
+    opacity:.95;
+  }
+  .busy-tile.bt-nieuw    { background:linear-gradient(135deg, rgba(239,68,68,.85), rgba(185,28,28,.85)); }
+  .busy-tile.bt-drank    { background:linear-gradient(135deg, rgba(245,158,11,.85), rgba(180,83,9,.85)); }
+  .busy-tile.bt-run      { background:linear-gradient(135deg, rgba(16,185,129,.85), rgba(4,120,87,.85)); }
+  .busy-tile.bt-koffie   { background:linear-gradient(135deg, rgba(139,92,246,.85), rgba(109,40,217,.85)); }
+  .busy-tile.bt-rekening { background:linear-gradient(135deg, rgba(14,165,233,.85), rgba(3,105,161,.85)); }
+
+  /* Walk-in modal */
+  .walkin-body{ padding:14px; display:flex; flex-direction:column; gap:10px; }
+  .walkin-body label{ font-size:13px; color:var(--muted); font-weight:700; }
+  .walkin-body input{
+    width:100%; padding:12px;
+    border:1px solid #2f2f2f; border-radius:12px;
+    background:#101010; color:var(--text);
+    font:16px/1.2 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Arial,sans-serif;
+  }
+
   /* ===== Fullscreen broadcast ===== */
   .alert-screen{
     position:fixed;
@@ -585,26 +904,69 @@
 
 <body>
 <header>
-  <div class="title">Tafeloverzicht</div>
+  <div class="title" id="appTitle">Tafeloverzicht</div>
+  <div class="view-switch" id="viewSwitch">
+    <button class="vs-btn" data-view="reservations">Reserveringen</button>
+    <button class="vs-btn" data-view="tables">Tafels</button>
+  </div>
 </header>
 
 <main>
-  <div class="toolbar">
-    <button class="btn" id="resetAll">Reset alles</button>
-    <button class="btn" id="focusBtn">Focusmodus</button>
-    <button class="btn gold" id="helpBtn">HELP</button>
-    <button class="btn gold" id="textBtn">TEXT</button>
-  </div>
 
-  <div class="status-bar" id="statusBar">
-    <button class="pill" data-filter="nieuw"><span class="dot nieuw"></span><span class="cnt" data-count="nieuw">0</span> nieuw</button>
-    <button class="pill" data-filter="drank"><span class="dot drank"></span><span class="cnt" data-count="drank">0</span> drank</button>
-    <button class="pill" data-filter="run"><span class="dot run"></span><span class="cnt" data-count="run">0</span> run</button>
-    <button class="pill" data-filter="koffie"><span class="dot koffie"></span><span class="cnt" data-count="koffie">0</span> koffie</button>
-    <button class="pill" data-filter="rekening"><span class="dot rekening"></span><span class="cnt" data-count="rekening">0</span> rekening</button>
-  </div>
+  <!-- ===== TAFELS VIEW ===== -->
+  <section id="tablesView" class="view">
+    <div class="toolbar">
+      <button class="btn" id="resetAll">Reset alles</button>
+      <button class="btn" id="focusBtn">Focusmodus</button>
+      <button class="btn gold" id="helpBtn">HELP</button>
+      <button class="btn gold" id="textBtn">TEXT</button>
+    </div>
 
-  <div class="groups" id="groups"></div>
+    <div class="status-bar" id="statusBar">
+      <button class="pill" data-filter="nieuw"><span class="dot nieuw"></span><span class="cnt" data-count="nieuw">0</span> nieuw</button>
+      <button class="pill" data-filter="drank"><span class="dot drank"></span><span class="cnt" data-count="drank">0</span> drank</button>
+      <button class="pill" data-filter="run"><span class="dot run"></span><span class="cnt" data-count="run">0</span> run</button>
+      <button class="pill" data-filter="koffie"><span class="dot koffie"></span><span class="cnt" data-count="koffie">0</span> koffie</button>
+      <button class="pill" data-filter="rekening"><span class="dot rekening"></span><span class="cnt" data-count="rekening">0</span> rekening</button>
+    </div>
+
+    <div class="groups" id="groups"></div>
+  </section>
+
+  <!-- ===== RESERVERINGEN VIEW ===== -->
+  <section id="reservationsView" class="view">
+    <div class="res-toolbar">
+      <button class="btn" id="resDatePrev">‹</button>
+      <div class="date-display" id="resDateDisplay">Vandaag</div>
+      <button class="btn" id="resDateNext">›</button>
+      <button class="btn" id="resDateToday">Vandaag</button>
+      <div class="res-spacer"></div>
+      <button class="btn gold" id="resRefresh">Vernieuwen</button>
+    </div>
+
+    <div class="res-section res-main">
+      <div class="res-section-head">
+        <span class="res-section-title">Nog niet binnen</span>
+        <span class="res-section-sub" id="resListSub"></span>
+      </div>
+      <div class="res-list" id="resList"></div>
+    </div>
+
+    <div class="res-section">
+      <div class="res-section-head">
+        <span class="res-section-title">Vrije tafels</span>
+        <span class="res-section-sub" id="freeSub">—</span>
+      </div>
+      <div class="free-tables" id="freeTables"></div>
+    </div>
+
+    <button class="arrived-toggle" id="arrivedToggle" type="button" aria-expanded="false">
+      <span id="arrivedToggleLbl">Al binnen: 0</span>
+      <span class="arrived-chev">▾</span>
+    </button>
+    <div class="arrived-panel" id="arrivedPanel" hidden></div>
+  </section>
+
 </main>
 
 <!-- Status / Notitie modal -->
@@ -760,15 +1122,68 @@ const alertTextEl = document.getElementById('alertText');
 
 const statusBarEl = document.getElementById('statusBar');
 
+/* Reservations view elements */
+const appTitleEl = document.getElementById('appTitle');
+const viewSwitchEl = document.getElementById('viewSwitch');
+const tablesViewEl = document.getElementById('tablesView');
+const reservationsViewEl = document.getElementById('reservationsView');
+const resDatePrevEl = document.getElementById('resDatePrev');
+const resDateNextEl = document.getElementById('resDateNext');
+const resDateTodayEl = document.getElementById('resDateToday');
+const resDateDisplayEl = document.getElementById('resDateDisplay');
+const resRefreshEl = document.getElementById('resRefresh');
+const freeTablesEl = document.getElementById('freeTables');
+const resListEl = document.getElementById('resList');
+const freeSubEl = document.getElementById('freeSub');
+const resListSubEl = document.getElementById('resListSub');
+const arrivedToggleEl = document.getElementById('arrivedToggle');
+const arrivedToggleLblEl = document.getElementById('arrivedToggleLbl');
+const arrivedPanelEl = document.getElementById('arrivedPanel');
+
+/* Max-bezetting per tafel (uit tafels_zusje_roermond.json) */
+const TABLE_CAPACITIES = {
+  1:12, 2:4, 3:7, 4:2, 5:4, 6:4, 7:2, 8:2, 9:2, 10:4, 11:4, 12:4, 13:4,
+  20:2, 21:2, 22:2, 23:3, 24:4, 25:6, 26:6, 27:6, 28:2, 29:2,
+  30:4, 31:3, 32:2, 33:2, 34:4, 35:2, 36:4, 37:2, 38:4, 39:4,
+  40:6, 41:5, 42:2, 43:2, 44:2, 45:4, 46:2, 47:2, 48:2, 49:2,
+  50:6, 51:6, 52:6, 53:2, 54:2, 57:2, 58:2
+};
+
 /* ===== State ===== */
 let rows = new Map();
 let pendingCell = null;
 let timerInterval = null;
 let tablesChannel = null;
 let eventsChannel = null;
+let reservationsChannel = null;
 let alertOpen = false;
 let activeFilter = null; // null | 'nieuw' | 'drank' | ...
-let prevUrgencyLevel = new Map(); // key -> 0/1/2, voor ding-sound bij crit
+let prevUrgencyLevel = new Map();
+
+let currentView = localStorage.getItem('app_view') || 'tables'; // 'tables' | 'reservations'
+let reservations = [];
+let currentResDate = todayStr();
+
+function todayStr(){
+  const d = new Date();
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), da = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${da}`;
+}
+function formatDateNL(ymd){
+  const [y,m,d] = ymd.split('-').map(Number);
+  const dt = new Date(y, m-1, d);
+  const dagen = ['Zo','Ma','Di','Wo','Do','Vr','Za'];
+  const maanden = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+  const isToday = ymd === todayStr();
+  const prefix = isToday ? 'Vandaag · ' : '';
+  return `${prefix}${dagen[dt.getDay()]} ${dt.getDate()} ${maanden[dt.getMonth()]}`;
+}
+function shiftDate(ymd, delta){
+  const [y,m,d] = ymd.split('-').map(Number);
+  const dt = new Date(y, m-1, d);
+  dt.setDate(dt.getDate()+delta);
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
 
 /* ===== Audio (tiny WebAudio beep) ===== */
 let audioCtx = null;
@@ -1103,7 +1518,272 @@ function refreshDerived(){
   updateStatusCounts();
   applyFilterClasses();
   updateNextUp();
+  if(currentView === 'reservations') renderReservationsDerived();
 }
+
+/* ===== Reservations ===== */
+async function fetchReservations(dateStr){
+  reservations = [];
+  if(!sb) return;
+  try{
+    const { data, error } = await sb.from('reservations')
+      .select('*')
+      .eq('res_date', dateStr)
+      .order('res_time', { ascending:true, nullsFirst:false });
+    if(error){ console.error('fetchReservations', error); return; }
+    reservations = data || [];
+  }catch(e){ console.error('fetchReservations ex', e); }
+}
+
+async function setReservationArrived(res, arrived){
+  if(!sb){
+    res.arrived = arrived;
+    res.arrived_at = arrived ? new Date().toISOString() : null;
+  } else {
+    try{
+      const patch = { arrived, arrived_at: arrived ? new Date().toISOString() : null, updated_at: new Date().toISOString() };
+      const { error } = await sb.from('reservations').update(patch).eq('id', res.id);
+      if(error){ console.error('arrive update', error); return; }
+      res.arrived = arrived;
+      res.arrived_at = patch.arrived_at;
+    }catch(e){ console.error('arrive ex', e); return; }
+  }
+  // Sync naar tafels
+  const zone = res.zone || inferZone((res.table_nums||[])[0]);
+  for(const n of (res.table_nums||[])){
+    const z = inferZone(n) || zone;
+    if(!z) continue;
+    if(arrived){
+      await upsertTable(z, n, { status:'nieuw', status_started:new Date().toISOString(), num_marked:true });
+    } else {
+      await upsertTable(z, n, { status:null, status_started:null, num_marked:false });
+    }
+    const cell = document.querySelector(`.table[data-zone="${z}"][data-num="${n}"]`);
+    if(cell){
+      applyStatus(cell, arrived ? 'nieuw' : null);
+      setNumFlag(cell, arrived);
+      if(!arrived) setTimer(cell,'');
+    }
+  }
+  refreshDerived();
+  renderReservationsView();
+}
+
+function inferZone(num){
+  if(num == null) return null;
+  if(num >= 1 && num <= 13) return 'bt';
+  if(num >= 20 && num <= 58) return 'boven';
+  return null;
+}
+
+/* ===== Render reserveringen ===== */
+function renderReservationsView(){
+  resDateDisplayEl.textContent = formatDateNL(currentResDate);
+  renderResList();
+  renderReservationsDerived();
+}
+
+function renderReservationsDerived(){
+  renderFreeTables();
+}
+
+function makeResRow(r){
+  const row = document.createElement('div');
+  row.className = 'res-row' + (r.arrived ? ' arrived' : '');
+  row.dataset.id = r.id;
+
+  const timeTxt = r.res_time ? r.res_time.slice(0,5) : '—';
+  const tablesTxt = (r.table_nums||[]).join(' · ') || '—';
+  const partyTxt = r.party_size ? `${r.party_size}p` : '';
+
+  row.innerHTML = `
+    <div class="res-time">${timeTxt}</div>
+    <div class="res-body">
+      <div class="res-name">${escapeHtml(r.name || '(onbekend)')}</div>
+      <div class="res-meta">
+        ${partyTxt ? `<span>${partyTxt}</span>` : ''}
+        <span class="res-tables">T ${escapeHtml(tablesTxt)}</span>
+      </div>
+      ${r.notes ? `<span class="res-note-bubble">${escapeHtml(r.notes)}</span>` : ''}
+    </div>
+    <button class="res-arrive">${r.arrived ? '✓ Binnen' : 'Binnen'}</button>
+  `;
+
+  row.querySelector('.res-arrive').addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    haptic(15);
+    await setReservationArrived(r, !r.arrived);
+  });
+  return row;
+}
+
+function renderResList(){
+  resListEl.innerHTML = '';
+  arrivedPanelEl.innerHTML = '';
+
+  const notArrived = reservations.filter(r => !r.arrived);
+  const arrived    = reservations.filter(r => r.arrived);
+
+  if(!reservations.length){
+    const e = document.createElement('div');
+    e.className = 'res-empty';
+    e.textContent = sb ? 'Geen reserveringen voor deze dag.' : 'Offline — geen Supabase-verbinding.';
+    resListEl.appendChild(e);
+    resListSubEl.textContent = '0';
+  } else if(!notArrived.length){
+    const e = document.createElement('div');
+    e.className = 'res-empty';
+    e.textContent = 'Alle reserveringen zijn binnen.';
+    resListEl.appendChild(e);
+    resListSubEl.textContent = '0';
+  } else {
+    for(const r of notArrived) resListEl.appendChild(makeResRow(r));
+    resListSubEl.textContent = `${notArrived.length}`;
+  }
+
+  for(const r of arrived) arrivedPanelEl.appendChild(makeResRow(r));
+  arrivedToggleLblEl.textContent = `Al binnen: ${arrived.length}`;
+  arrivedToggleEl.style.display = arrived.length ? '' : 'none';
+}
+
+function renderFreeTables(){
+  freeTablesEl.innerHTML = '';
+  const free = [];
+  for(const g of GROUPS){
+    for(const n of expandRanges(g.ranges)){
+      const r = rows.get(keyOf(g.zone, n));
+      if(!r || !r.status) free.push({zone:g.zone, num:n});
+    }
+  }
+  freeSubEl.textContent = `${free.length} tafels`;
+  statFreeEl.textContent = free.length;
+
+  for(const t of free){
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'free-tile';
+    el.innerHTML = `<span class="tnum">${t.num}</span><span class="zone">${t.zone==='bt'?'Beneden':'Boven'}</span>`;
+    el.addEventListener('click', async ()=>{
+      haptic(15);
+      await upsertTable(t.zone, t.num, { status:'nieuw', status_started:new Date().toISOString(), num_marked:true });
+      const cell = document.querySelector(`.table[data-zone="${t.zone}"][data-num="${t.num}"]`);
+      if(cell){ applyStatus(cell, 'nieuw'); setNumFlag(cell, true); }
+      refreshDerived();
+    });
+    freeTablesEl.appendChild(el);
+  }
+}
+
+function renderBusyTables(){
+  busyListEl.innerHTML = '';
+  const busy = [];
+  for(const [k, r] of rows.entries()){
+    if(r.status && r.status_started){
+      busy.push(r);
+    }
+  }
+  busy.sort((a,b)=> Date.parse(a.status_started) - Date.parse(b.status_started));
+  busySubEl.textContent = `${busy.length} tafels`;
+  statBusyEl.textContent = busy.length;
+
+  const now = Date.now();
+  for(const r of busy){
+    const el = document.createElement('div');
+    el.className = `busy-tile bt-${r.status}`;
+    const elapsed = fmtElapsed(now - Date.parse(r.status_started));
+    el.innerHTML = `
+      <span class="bt-num">${r.table_num}</span>
+      <span class="bt-status">${r.status}</span>
+      <span class="bt-timer">${elapsed}</span>
+    `;
+    busyListEl.appendChild(el);
+  }
+}
+
+function renderResStats(){
+  statTotalEl.textContent = reservations.length;
+  statArrivedEl.textContent = reservations.filter(r=>r.arrived).length;
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ===== View switching ===== */
+function setView(view){
+  currentView = view;
+  localStorage.setItem('app_view', view);
+  tablesViewEl.classList.toggle('active', view === 'tables');
+  reservationsViewEl.classList.toggle('active', view === 'reservations');
+  viewSwitchEl.querySelectorAll('.vs-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.view === view);
+  });
+  appTitleEl.textContent = view === 'reservations' ? 'Reserveringen' : 'Tafeloverzicht';
+
+  if(view === 'reservations'){
+    renderReservationsView();
+  } else {
+    applyResponsiveGap();
+    layoutToFit();
+  }
+}
+
+viewSwitchEl.addEventListener('click', async (e)=>{
+  const btn = e.target.closest('.vs-btn');
+  if(!btn) return;
+  haptic(8);
+  const v = btn.dataset.view;
+  if(v === 'reservations' && reservations.length === 0){
+    await fetchReservations(currentResDate);
+  }
+  setView(v);
+});
+
+/* ===== Date nav ===== */
+resDatePrevEl.addEventListener('click', async ()=>{
+  haptic(8);
+  currentResDate = shiftDate(currentResDate, -1);
+  await fetchReservations(currentResDate);
+  renderReservationsView();
+});
+resDateNextEl.addEventListener('click', async ()=>{
+  haptic(8);
+  currentResDate = shiftDate(currentResDate, 1);
+  await fetchReservations(currentResDate);
+  renderReservationsView();
+});
+resDateTodayEl.addEventListener('click', async ()=>{
+  haptic(8);
+  currentResDate = todayStr();
+  await fetchReservations(currentResDate);
+  renderReservationsView();
+});
+resRefreshEl.addEventListener('click', async ()=>{
+  haptic(10);
+  await fetchReservations(currentResDate);
+  renderReservationsView();
+});
+
+/* ===== Reservations realtime ===== */
+function subscribeRealtimeReservations(){
+  if(!sb) return;
+  if(reservationsChannel) sb.removeChannel(reservationsChannel);
+  reservationsChannel = sb.channel('reservations:all')
+    .on('postgres_changes', { event:'*', schema:'public', table:'reservations' }, async payload=>{
+      const row = payload.new || payload.old;
+      if(!row) return;
+      if(row.res_date !== currentResDate) return;
+      // Simpelste: volledig herladen voor de huidige datum
+      await fetchReservations(currentResDate);
+      if(currentView === 'reservations') renderReservationsView();
+    })
+    .subscribe();
+}
+
+/* Update busy timers elke seconde in reserveringsview */
+setInterval(()=>{
+  if(currentView === 'reservations') renderBusyTables();
+}, 1000);
 
 statusBarEl.addEventListener('click', (e)=>{
   const pill = e.target.closest('.pill');
@@ -1348,15 +2028,21 @@ window.addEventListener('orientationchange', ()=>setTimeout(()=>{ applyResponsiv
 (async function init(){
   // 1) Altijd eerst de UI neerzetten (ook zonder netwerk / Supabase)
   render();
+  setView(currentView);  // activeer opgeslagen view
   applyResponsiveGap();
   layoutToFit();
 
   // 2) Daarna data ophalen + realtime (best-effort)
   try{
-    await fetchAll();
+    await Promise.all([
+      fetchAll(),
+      fetchReservations(currentResDate)
+    ]);
     render();                // hertekenen met data als die binnen is
+    if(currentView === 'reservations') renderReservationsView();
     subscribeRealtimeTables();
     subscribeBroadcasts();
+    subscribeRealtimeReservations();
     autoDailyResetCheck();
   }catch(e){
     console.error('init network phase failed', e);
