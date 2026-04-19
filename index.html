@@ -842,6 +842,14 @@
   .arrive-dot.complete{ background:var(--run); color:var(--run); }
   .arrive-partial{ border-color:rgba(245,158,11,.55) !important; }
   .arrive-complete{ border-color:rgba(16,185,129,.55) !important; }
+  .arrive-change{ border-color:rgba(14,165,233,.55) !important; color:#38bdf8; }
+
+  .input-error{
+    font-size:13px;
+    color:#f87171;
+    font-weight:700;
+    min-height:1em;
+  }
 
   .res-empty{
     text-align:center;
@@ -1022,10 +1030,45 @@
         <button class="choice arrive-btn arrive-complete" id="arriveComplete">
           <span class="arrive-dot complete"></span>Compleet binnen
         </button>
+        <button class="choice arrive-btn arrive-change" id="arriveChange">Tafel aanpassen</button>
         <button class="choice reset" id="arriveUndo">Ongedaan maken</button>
       </div>
       <div class="modal-footer">
         <button class="link" id="arriveClose">Sluiten</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tafel aanpassen overlay -->
+  <div id="changeTableOverlay" class="overlay" aria-modal="true" role="dialog">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="arrive-title">Tafel aanpassen</div>
+        <div class="arrive-sub" id="changeTableSub"></div>
+      </div>
+      <div class="input-wrap">
+        <input id="changeTableInput" type="text" inputmode="numeric" placeholder="Bijv. 5  of  21,22" />
+        <div class="input-hint">Meerdere tafels? Scheid ze met een komma.</div>
+        <div class="input-error" id="changeTableError"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="link" id="changeTableCancel">Annuleren</button>
+        <button class="link primary" id="changeTableConfirm">Bevestigen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conflict overlay -->
+  <div id="conflictOverlay" class="overlay" aria-modal="true" role="dialog">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="arrive-title">Tafel al in gebruik</div>
+        <div class="arrive-sub" id="conflictSub"></div>
+      </div>
+      <div class="modal-grid">
+        <button class="choice arrive-btn arrive-complete" id="conflictSwap">Ja, wissel om</button>
+        <button class="choice arrive-btn arrive-change" id="conflictReassign">Nee, kies andere tafel</button>
+        <button class="choice reset" id="conflictCancel">Annuleren</button>
       </div>
     </div>
   </div>
@@ -1208,9 +1251,27 @@ const arriveTitleEl = document.getElementById('arriveTitle');
 const arriveSubEl = document.getElementById('arriveSub');
 const arrivePartialEl = document.getElementById('arrivePartial');
 const arriveCompleteEl = document.getElementById('arriveComplete');
+const arriveChangeEl = document.getElementById('arriveChange');
 const arriveUndoEl = document.getElementById('arriveUndo');
 const arriveCloseEl = document.getElementById('arriveClose');
+
+const changeTableOverlayEl = document.getElementById('changeTableOverlay');
+const changeTableSubEl = document.getElementById('changeTableSub');
+const changeTableInputEl = document.getElementById('changeTableInput');
+const changeTableErrorEl = document.getElementById('changeTableError');
+const changeTableConfirmEl = document.getElementById('changeTableConfirm');
+const changeTableCancelEl = document.getElementById('changeTableCancel');
+
+const conflictOverlayEl = document.getElementById('conflictOverlay');
+const conflictSubEl = document.getElementById('conflictSub');
+const conflictSwapEl = document.getElementById('conflictSwap');
+const conflictReassignEl = document.getElementById('conflictReassign');
+const conflictCancelEl = document.getElementById('conflictCancel');
+
 let arrivingRes = null;
+let changingRes = null;
+let pendingNewNums = null;
+let conflictRes = null;
 
 /* Max-bezetting per tafel (uit tafels_zusje_roermond.json) */
 const TABLE_CAPACITIES = {
@@ -1769,6 +1830,219 @@ arriveUndoEl.addEventListener('click', async ()=>{
   const r = arrivingRes; closeArriveModal();
   await setArrivalState(r, 'pending');
 });
+
+/* ===== Tafel aanpassen ===== */
+arriveChangeEl.addEventListener('click', ()=>{
+  if(!arrivingRes) return;
+  haptic(10);
+  const r = arrivingRes; closeArriveModal();
+  openChangeTableModal(r);
+});
+
+function openChangeTableModal(res){
+  changingRes = res;
+  const tablesTxt = (res.table_nums||[]).join(', ');
+  changeTableSubEl.textContent = `${res.name || '(onbekend)'} · huidig: T ${tablesTxt}`;
+  changeTableInputEl.value = '';
+  changeTableErrorEl.textContent = '';
+  changeTableOverlayEl.classList.add('open');
+  setTimeout(()=>changeTableInputEl.focus(), 60);
+}
+function closeChangeTableModal(){
+  changeTableOverlayEl.classList.remove('open');
+  changingRes = null;
+}
+
+function parseTableInput(str){
+  return (str||'').split(/[,\s]+/)
+    .map(s => parseInt(s.trim(), 10))
+    .filter(n => Number.isFinite(n) && n > 0);
+}
+
+function allValidTableNums(){
+  const set = new Set();
+  for(const g of GROUPS) for(const n of expandRanges(g.ranges)) set.add(n);
+  return set;
+}
+
+function findFreeTableFor(party, excludeNums){
+  const valid = allValidTableNums();
+  const reserved = new Set();
+  for(const r of reservations){
+    if(excludeNums.has(r.id)) continue;
+    for(const n of (r.table_nums||[])) reserved.add(n);
+  }
+  const all = [...valid].sort((a,b)=>a-b);
+  let fallback = null;
+  for(const n of all){
+    if(excludeNums.has(n)) continue;
+    if(reserved.has(n)) continue;
+    const z = inferZone(n);
+    if(!z) continue;
+    const row = rows.get(keyOf(z, n));
+    if(row && row.status) continue; // bezet nu
+    const cap = TABLE_CAPACITIES[n] || 0;
+    if(!party || cap >= party){ return n; }
+    if(fallback === null) fallback = n;
+  }
+  return fallback;
+}
+
+changeTableCancelEl.addEventListener('click', closeChangeTableModal);
+changeTableOverlayEl.addEventListener('click', (e)=>{ if(e.target===changeTableOverlayEl) closeChangeTableModal(); });
+changeTableInputEl.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); changeTableConfirmEl.click(); }
+});
+
+changeTableConfirmEl.addEventListener('click', async ()=>{
+  if(!changingRes) return;
+  const nums = parseTableInput(changeTableInputEl.value);
+  if(!nums.length){
+    changeTableErrorEl.textContent = 'Voer minstens 1 tafelnummer in.';
+    return;
+  }
+  const valid = allValidTableNums();
+  const invalid = nums.filter(n => !valid.has(n));
+  if(invalid.length){
+    changeTableErrorEl.textContent = `Tafel(s) ${invalid.join(', ')} bestaat niet.`;
+    return;
+  }
+  const current = new Set(changingRes.table_nums||[]);
+  if(nums.length === current.size && nums.every(n => current.has(n))){
+    closeChangeTableModal();
+    return;
+  }
+
+  // Conflict: eerste andere reservering (vandaag) die één van nums al heeft
+  let firstConflict = null;
+  for(const n of nums){
+    const other = reservations.find(r =>
+      r.id !== changingRes.id && (r.table_nums||[]).includes(n)
+    );
+    if(other){ firstConflict = { num:n, res:other }; break; }
+  }
+
+  haptic(12);
+
+  if(!firstConflict){
+    closeChangeTableModal();
+    await applyTableChange(changingRes, nums);
+    refreshDerived();
+    renderReservationsView();
+    changingRes = null;
+    return;
+  }
+
+  // Conflict → vraag om wissel of nieuwe toewijzing
+  pendingNewNums = nums;
+  conflictRes = firstConflict.res;
+  const otherTimeTxt = conflictRes.res_time ? ' (' + conflictRes.res_time.slice(0,5) + ')' : '';
+  conflictSubEl.textContent = `Tafel ${firstConflict.num} hoort nu bij ${conflictRes.name || 'onbekend'}${otherTimeTxt}. Omwisselen of de bestaande reservering een andere tafel geven?`;
+  changeTableOverlayEl.classList.remove('open');
+  conflictOverlayEl.classList.add('open');
+});
+
+conflictCancelEl.addEventListener('click', ()=>{
+  conflictOverlayEl.classList.remove('open');
+  changingRes = null; conflictRes = null; pendingNewNums = null;
+});
+conflictOverlayEl.addEventListener('click', (e)=>{
+  if(e.target===conflictOverlayEl){ conflictCancelEl.click(); }
+});
+
+conflictSwapEl.addEventListener('click', async ()=>{
+  if(!changingRes || !conflictRes || !pendingNewNums) return;
+  haptic(18);
+  const oldNumsOfA = [...(changingRes.table_nums||[])];
+  const A = changingRes, B = conflictRes, newNums = pendingNewNums;
+  conflictOverlayEl.classList.remove('open');
+  changingRes = null; conflictRes = null; pendingNewNums = null;
+
+  await applyTableChange(A, newNums);
+  await applyTableChange(B, oldNumsOfA);
+  refreshDerived();
+  renderReservationsView();
+});
+
+conflictReassignEl.addEventListener('click', async ()=>{
+  if(!changingRes || !conflictRes || !pendingNewNums) return;
+  haptic(18);
+  const A = changingRes, B = conflictRes, newNums = pendingNewNums;
+  const oldNumsOfA = new Set(A.table_nums||[]);
+  // Excludeer: nieuwe nums van A + A's oude tafels (niet swappen) + ids van A/B
+  const excludeIds = new Set([A.id, B.id]);
+  const excludeNums = new Set([...newNums, ...oldNumsOfA]);
+
+  const party = B.party_size || 1;
+  const candidate = findFreeTableFor(party, new Set([...excludeNums, ...(function(){
+    const s = new Set();
+    for(const r of reservations){ if(r.id===A.id||r.id===B.id) continue; for(const n of (r.table_nums||[])) s.add(n); }
+    return s;
+  })()]));
+
+  conflictOverlayEl.classList.remove('open');
+
+  if(!candidate){
+    // fallback: oude tafels van A gebruiken (effectief wisselen)
+    const oldArr = [...oldNumsOfA];
+    if(!oldArr.length){
+      changeTableErrorEl.textContent = 'Geen vrije alternatieve tafel gevonden.';
+      changeTableOverlayEl.classList.add('open');
+      changingRes = A; conflictRes = null; pendingNewNums = null;
+      return;
+    }
+    await applyTableChange(A, newNums);
+    await applyTableChange(B, oldArr);
+  } else {
+    await applyTableChange(A, newNums);
+    await applyTableChange(B, [candidate]);
+  }
+
+  changingRes = null; conflictRes = null; pendingNewNums = null;
+  refreshDerived();
+  renderReservationsView();
+});
+
+async function applyTableChange(res, newNums){
+  const state = getArrivalState(res);
+  const oldNums = [...(res.table_nums||[])];
+  const now = new Date().toISOString();
+
+  // Oude tafels leeggooien als reservering actief was
+  if(state !== 'pending'){
+    for(const n of oldNums){
+      const z = inferZone(n) || res.zone;
+      if(!z) continue;
+      await upsertTable(z, n, { status:null, status_started:null, num_marked:false });
+      const cell = document.querySelector(`.table[data-zone="${z}"][data-num="${n}"]`);
+      if(cell){ applyStatus(cell, null); setNumFlag(cell, false); setTimer(cell, ''); }
+    }
+  }
+
+  // Reservering updaten
+  const zone = inferZone(newNums[0]) || res.zone;
+  if(sb){
+    try{
+      const { error } = await sb.from('reservations').update({
+        table_nums: newNums, zone, updated_at: now
+      }).eq('id', res.id);
+      if(error) console.error('changeTable update', error);
+    }catch(e){ console.error('changeTable ex', e); }
+  }
+  res.table_nums = newNums;
+  res.zone = zone;
+
+  // Nieuwe tafels markeren als reservering actief was
+  if(state !== 'pending'){
+    for(const n of newNums){
+      const z = inferZone(n) || zone;
+      if(!z) continue;
+      await upsertTable(z, n, { status:'nieuw', status_started:now, num_marked:true });
+      const cell = document.querySelector(`.table[data-zone="${z}"][data-num="${n}"]`);
+      if(cell){ applyStatus(cell, 'nieuw'); setNumFlag(cell, true); }
+    }
+  }
+}
 
 function renderFreeTables(){
   freeGroupsEl.innerHTML = '';
