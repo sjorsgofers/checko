@@ -1,793 +1,1369 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=1920, initial-scale=1" />
-  <title>Zusje Roermond Dashboard</title>
-  <style>
-    :root{
-      --bg:#000000;
-      --panel:#090909;
-      --panel2:#050505;
-      --gold:#c8a45b;
-      --white:#ffffff;
-      --muted:#b8b8b8;
-      --red:#ff4d4f;
-      --green:#3ddc84;
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>Tafeloverzicht</title>
 
-    html, body {
-      height:100%;
-      margin:0;
-      background:#000;
-      overflow:hidden;
-      color:#fff;
-      font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
-      -webkit-text-size-adjust:100%;
-      text-size-adjust:100%;
-    }
+<style>
+  :root{
+    --bg:#0a0a0a;
+    --bg-2:#0f0f0f;
+    --card:#141414;
+    --card-2:#1a1a1a;
+    --card-3:#202020;
+    --text:#ffffff;
+    --muted:#9a9a9a;
+    --muted-2:#5a5a5a;
 
-    *{ box-sizing:border-box; }
+    --nieuw:#ef4444;
+    --nieuw-2:#b91c1c;
+    --drank:#f59e0b;
+    --drank-2:#b45309;
+    --run:#10b981;
+    --run-2:#047857;
+    --koffie:#8b5cf6;
+    --koffie-2:#6d28d9;
+    --rekening:#0ea5e9;
+    --rekening-2:#0369a1;
 
-    #dashboard-shell{
-      position:fixed;
-      inset:0;
-      background:var(--bg);
-      overflow:hidden;
-    }
+    --gold:#c8a45b;
+    --gold-dim:#8a7140;
+    --border-idle:#2a2a2a;
 
-    .zd-stage{
-      position:relative;
-      width:100%;
-      height:100%;
-    }
+    --gap:10px;
+    --tile:86px;
+  }
 
-    .zd-frame{
-      position:absolute;
-      left:50%;
-      top:50%;
-      width:1920px;
-      height:1080px;
-      transform:translate(-50%, -50%) scale(1);
-      transform-origin:center center;
-      will-change:transform;
-    }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{height:100%; overscroll-behavior:none}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #1a1a1a 0%, transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font:16px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Arial,sans-serif;
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+    letter-spacing:-0.01em;
+  }
 
-    .zd-wrap{
-      width:100%;
-      height:100%;
-      padding:28px 30px 26px;
-      background:#000;
-      display:flex;
-      flex-direction:column;
-      gap:22px;
-    }
+  /* ===== Header ===== */
+  header{
+    background:linear-gradient(180deg, rgba(24,24,24,.95) 0%, rgba(12,12,12,.85) 100%);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(200,164,91,.25);
+    padding:8px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex:0 0 auto;
+  }
 
-    .zd-top{
-      display:grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items:center;
-      min-height:170px;
-    }
+  .title{
+    font-weight:800;
+    font-size:clamp(14px, 2.2vw, 18px);
+    flex:1;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    letter-spacing:.02em;
+    background:linear-gradient(180deg, #fff 0%, #c8a45b 120%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
 
-    .zd-top-left{
-      justify-self:start;
-      align-self:center;
-    }
+  main{
+    flex:1 1 auto;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:8px 12px 12px;
+  }
 
-    .zd-brand{
-      font-size:30px;
-      font-weight:900;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      color:var(--white);
-    }
+  /* ===== Toolbar ===== */
+  .toolbar{
+    display:flex;
+    gap:6px;
+    flex-wrap:nowrap;
+    align-items:center;
+    flex:0 0 auto;
+    overflow-x:auto;
+  }
 
-    .zd-clock-wrap{
-      justify-self:center;
-      text-align:center;
-    }
+  .btn{
+    appearance:none;
+    background:linear-gradient(180deg, #1e1e1e 0%, #141414 100%);
+    border:1px solid #2f2f2f;
+    color:var(--text);
+    padding:8px 12px;
+    border-radius:10px;
+    font-weight:700;
+    cursor:pointer;
+    font-size:clamp(12px, 1.8vw, 13px);
+    white-space:nowrap;
+    transition:transform .1s, background .15s, border-color .15s;
+    box-shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 2px 8px rgba(0,0,0,.25);
+  }
 
-    .zd-clock{
-      font-size:150px;
-      line-height:.88;
-      font-weight:900;
-      letter-spacing:-0.06em;
-      font-variant-numeric:tabular-nums;
-      color:#fff;
-    }
+  .btn:active{ transform:scale(.96) }
 
-    .zd-date{
-      margin-top:10px;
-      font-size:42px;
-      font-weight:800;
-      color:var(--gold);
-      letter-spacing:.03em;
-      font-variant-numeric:tabular-nums;
-    }
+  .btn.gold{
+    border:1px solid var(--gold);
+    color:var(--gold);
+    background:linear-gradient(180deg, rgba(200,164,91,.08) 0%, rgba(200,164,91,.02) 100%);
+    letter-spacing:.5px;
+  }
 
-    .zd-top-right{
-      justify-self:end;
-      align-self:center;
-      color:transparent;
-      user-select:none;
-    }
+  .btn.focus-on{
+    background:linear-gradient(180deg, var(--gold) 0%, var(--gold-dim) 100%);
+    color:#0b0b0b;
+    border-color:var(--gold);
+  }
 
-    .zd-main{
-      flex:1;
-      min-height:0;
-      display:grid;
-      grid-template-columns: 420px 1fr 420px;
-      gap:22px;
-    }
+  /* ===== Status counter bar ===== */
+  .status-bar{
+    display:flex;
+    gap:6px;
+    flex:0 0 auto;
+    overflow-x:auto;
+    padding:2px 0;
+  }
 
-    .zd-col{
-      min-height:0;
-      display:flex;
-      flex-direction:column;
-      gap:22px;
-    }
+  .pill{
+    appearance:none;
+    background:linear-gradient(180deg, #161616 0%, #0f0f0f 100%);
+    border:1px solid #262626;
+    color:var(--muted);
+    padding:7px 10px;
+    border-radius:999px;
+    font-weight:800;
+    cursor:pointer;
+    font-size:clamp(11px, 1.6vw, 13px);
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    white-space:nowrap;
+    flex:0 0 auto;
+    transition:all .15s;
+    letter-spacing:.01em;
+  }
 
-    .zd-card{
-      min-height:0;
-      display:flex;
-      flex-direction:column;
-      border:2px solid var(--gold);
-      border-radius:28px;
-      background:linear-gradient(180deg,var(--panel),var(--panel2));
-      box-shadow:
-        0 0 0 1px rgba(200,164,91,.12) inset,
-        0 18px 40px rgba(0,0,0,.35);
-      overflow:hidden;
-    }
+  .pill .dot{
+    width:10px; height:10px; border-radius:50%;
+    box-shadow:0 0 8px currentColor;
+  }
+  .pill .dot.nieuw{ background:var(--nieuw); color:var(--nieuw); }
+  .pill .dot.drank{ background:var(--drank); color:var(--drank); }
+  .pill .dot.run{ background:var(--run); color:var(--run); }
+  .pill .dot.koffie{ background:var(--koffie); color:var(--koffie); }
+  .pill .dot.rekening{ background:var(--rekening); color:var(--rekening); }
 
-    .zd-side{
-      padding:22px 18px 18px;
-    }
+  .pill .cnt{
+    font-variant-numeric:tabular-nums;
+    color:#fff;
+    min-width:1ch;
+  }
 
-    .zd-center{
-      padding:18px;
-    }
+  .pill[data-active="true"]{
+    color:#fff;
+    border-color:var(--gold);
+    background:linear-gradient(180deg, rgba(200,164,91,.18) 0%, rgba(200,164,91,.06) 100%);
+  }
 
-    .zd-card-title{
-      font-size:30px;
-      font-weight:900;
-      color:var(--gold);
-      letter-spacing:.01em;
-      margin-bottom:16px;
-    }
+  .pill[data-zero="true"]{
+    opacity:.45;
+  }
 
-    .zd-list{
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      min-height:0;
-      overflow:auto;
-      padding-right:4px;
-    }
+  /* ===== Groups ===== */
+  .groups{
+    flex:1 1 auto;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    overflow:hidden;
+  }
 
-    .zd-list::-webkit-scrollbar{
-      width:8px;
-    }
+  .group{
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+  }
 
-    .zd-list::-webkit-scrollbar-thumb{
-      background:#2b2b2b;
-      border-radius:999px;
-    }
+  .group-label{
+    flex:0 0 auto;
+    background:linear-gradient(180deg, rgba(200,164,91,.08) 0%, rgba(200,164,91,.02) 100%);
+    border:1px solid rgba(200,164,91,.3);
+    border-radius:8px;
+    padding:4px 10px;
+    font-weight:900;
+    letter-spacing:.06em;
+    font-size:clamp(11px, 1.6vw, 13px);
+    line-height:1.1;
+    color:var(--gold);
+    text-transform:uppercase;
+  }
 
-    .zd-check-item{
-      display:flex;
-      align-items:center;
-      gap:14px;
-      min-height:76px;
-      padding:16px;
-      border:1px solid rgba(200,164,91,.35);
-      border-radius:18px;
-      background:#070707;
-    }
+  .group-grid{
+    --cols: 6;
+    display:grid;
+    grid-template-columns:repeat(var(--cols), var(--tile));
+    grid-auto-rows:var(--tile);
+    gap:var(--gap);
+    justify-content:center;
+    align-content:start;
+    flex:1 1 auto;
+    min-height:0;
+    overflow:hidden;
+  }
 
-    .zd-check-left{
-      display:flex;
-      align-items:center;
-      gap:14px;
-      min-width:0;
-      flex:1;
-    }
+  /* ===== Tile ===== */
+  .table{
+    width:var(--tile);
+    height:var(--tile);
+    border-radius:14px;
+    background:linear-gradient(180deg, #181818 0%, #0f0f0f 100%);
+    border:1px solid var(--border-idle);
+    display:grid;
+    grid-template-rows:auto 1fr auto;
+    align-items:center;
+    justify-items:center;
+    padding:7px;
+    gap:4px;
+    position:relative;
+    user-select:none;
+    cursor:pointer;
+    transition:opacity .25s ease, transform .08s ease, filter .25s ease;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.03),
+      0 1px 2px rgba(0,0,0,.4);
+    overflow:hidden;
+  }
 
-    .zd-dot{
-      width:12px;
-      height:12px;
-      border-radius:999px;
-      background:#666;
-      flex:0 0 auto;
-      box-shadow:0 0 12px rgba(255,255,255,.08);
-    }
+  .table:active{ transform:scale(.96) }
 
-    .zd-dot.ok{
-      background:var(--green);
-      box-shadow:0 0 14px rgba(61,220,132,.35);
-    }
+  /* idle tile (geen status) — zachter wanneer niks speelt */
+  .table:not([data-status]){
+    opacity:.42;
+  }
+  .table:not([data-status]).num-flagged-only{
+    opacity:.72;
+    border-color:rgba(239,68,68,.35);
+  }
 
-    .zd-dot.bad{
-      background:var(--red);
-      box-shadow:0 0 14px rgba(255,77,79,.35);
-    }
+  /* Focus mode: idle nog verder dimmen */
+  body.focus-on .table:not([data-status]){
+    opacity:.16;
+  }
+  body.focus-on .table:not([data-status]).num-flagged-only{
+    opacity:.32;
+  }
 
-    .zd-name{
-      font-size:31px;
-      line-height:1.08;
-      font-weight:900;
-      letter-spacing:.01em;
-    }
+  /* Filter mode: niet-matchende tegels dimmen */
+  body.has-filter .table[data-status]:not(.filter-match){
+    opacity:.25;
+    filter:saturate(.5);
+  }
+  body.has-filter .table:not([data-status]){
+    opacity:.12;
+  }
 
-    .zd-name.ok{
-      color:var(--green);
-    }
+  /* Getal */
+  .num{
+    font-weight:900;
+    font-size:calc(var(--tile) * 0.26);
+    line-height:1;
+    color:#fff;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:-0.02em;
+    text-shadow:0 1px 2px rgba(0,0,0,.4);
+  }
 
-    .zd-name.bad{
-      color:var(--red);
-    }
+  .num.num-flagged{ color: var(--nieuw); }
 
-    .zd-actions{
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-      min-height:0;
-      overflow:auto;
-      justify-content:center;
-      height:100%;
-    }
+  .note{
+    font-weight:600;
+    font-size:calc(var(--tile) * 0.135);
+    text-align:center;
+    line-height:1.15;
+    max-width:100%;
+    max-height:2.4em;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    color:rgba(255,255,255,.9);
+    letter-spacing:.01em;
+  }
 
-    .zd-actions::-webkit-scrollbar{
-      width:8px;
-    }
+  .timer{
+    position:absolute;
+    bottom:5px;
+    left:50%;
+    transform:translateX(-50%);
+    font-weight:800;
+    font-size:calc(var(--tile) * 0.14);
+    color:rgba(255,255,255,.95);
+    pointer-events:none;
+    font-family:"SF Mono","Menlo","Consolas",monospace;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:-.02em;
+    text-shadow:0 1px 2px rgba(0,0,0,.35);
+  }
 
-    .zd-actions::-webkit-scrollbar-thumb{
-      background:#2b2b2b;
-      border-radius:999px;
-    }
+  /* Actieve statussen */
+  .table[data-status]{
+    color:#fff;
+    border-color:transparent;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.18),
+      inset 0 -20px 30px rgba(0,0,0,.25),
+      0 4px 14px rgba(0,0,0,.35);
+  }
+  .table[data-status] .num{ color:#fff !important; text-shadow:0 1px 3px rgba(0,0,0,.35); }
+  .table[data-status] .note{ color:#fff; }
+  .table[data-status] .timer{ color:#fff; }
 
-    .zd-action{
-      display:flex;
-      align-items:center;
-      gap:18px;
-      min-height:92px;
-      padding:20px 22px;
-      border-radius:22px;
-      background:#070707;
-      border:1px solid rgba(200,164,91,.35);
-    }
+  .table.status-nieuw   { background:linear-gradient(160deg, #f87171 0%, var(--nieuw) 50%, var(--nieuw-2) 100%); }
+  .table.status-drank   { background:linear-gradient(160deg, #fbbf24 0%, var(--drank) 50%, var(--drank-2) 100%); }
+  .table.status-run     { background:linear-gradient(160deg, #34d399 0%, var(--run) 50%, var(--run-2) 100%); }
+  .table.status-koffie  { background:linear-gradient(160deg, #a78bfa 0%, var(--koffie) 50%, var(--koffie-2) 100%); }
+  .table.status-rekening{ background:linear-gradient(160deg, #38bdf8 0%, var(--rekening) 50%, var(--rekening-2) 100%); }
 
-    .zd-action .zd-dot{
-      width:14px;
-      height:14px;
-      background:var(--gold);
-      box-shadow:0 0 12px rgba(200,164,91,.28);
-    }
+  /* Urgency escalatie */
+  @keyframes pulseSoft{
+    0%,100% { filter:brightness(1) saturate(1); }
+    50%     { filter:brightness(1.18) saturate(1.1); }
+  }
+  @keyframes pulseHard{
+    0%,100% { transform:scale(1);     box-shadow:
+                inset 0 1px 0 rgba(255,255,255,.18),
+                inset 0 -20px 30px rgba(0,0,0,.25),
+                0 0 0 0 rgba(255,255,255,.55),
+                0 4px 14px rgba(0,0,0,.35); }
+    50%     { transform:scale(1.035); box-shadow:
+                inset 0 1px 0 rgba(255,255,255,.22),
+                inset 0 -20px 30px rgba(0,0,0,.2),
+                0 0 0 8px rgba(255,255,255,0),
+                0 8px 22px rgba(0,0,0,.45); }
+  }
 
-    .zd-action.pending .zd-dot{
-      background:#8b8b8b;
-      box-shadow:none;
-    }
+  .table.urgency-warn[data-status]{
+    animation: pulseSoft 2.2s ease-in-out infinite;
+  }
+  .table.urgency-crit[data-status]{
+    animation: pulseHard 1.3s ease-in-out infinite;
+  }
 
-    .zd-action-text{
-      font-size:40px;
-      line-height:1.08;
-      font-weight:900;
-      color:#fff;
-      letter-spacing:-0.02em;
-    }
+  /* Next-up ring (langst wachtend per status) */
+  .table.next-up[data-status]::after{
+    content:"";
+    position:absolute;
+    inset:-1px;
+    border-radius:inherit;
+    border:2.5px solid rgba(255,255,255,.9);
+    box-shadow:0 0 0 1px rgba(0,0,0,.4) inset;
+    pointer-events:none;
+    animation: nextGlow 2.4s ease-in-out infinite;
+  }
+  @keyframes nextGlow{
+    0%,100% { opacity:.7; }
+    50%     { opacity:1;   box-shadow:0 0 10px rgba(255,255,255,.45), 0 0 0 1px rgba(0,0,0,.4) inset; }
+  }
 
-    .zd-empty{
-      font-size:34px;
-      font-weight:700;
-      color:#9a9a9a;
-      padding:8px 4px;
-    }
+  /* ===== Overlays ===== */
+  .overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.78);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    z-index:2147483647;
+    animation: fadeIn .18s ease-out;
+  }
+  @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
 
-    .zd-footer{
-      text-align:center;
-      color:#6d6d6d;
-      font-size:17px;
-      font-weight:600;
-    }
-  </style>
+  .overlay.open{ display:flex }
+
+  .modal{
+    width:100%;
+    max-width:560px;
+    background:linear-gradient(180deg, var(--card-2) 0%, var(--card) 100%);
+    border:1px solid rgba(200,164,91,.35);
+    border-radius:18px;
+    box-shadow:0 20px 60px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.03) inset;
+    overflow:hidden;
+    animation: modalIn .22s cubic-bezier(.2,.7,.3,1);
+  }
+  @keyframes modalIn{
+    from{ transform:translateY(10px) scale(.98); opacity:0 }
+    to{ transform:translateY(0) scale(1); opacity:1 }
+  }
+
+  .modal-header{
+    padding:14px 18px;
+    font-weight:900;
+    font-size:16px;
+    border-bottom:1px solid rgba(200,164,91,.2);
+    background:linear-gradient(180deg, #1d1d1d 0%, #141414 100%);
+    color:var(--text);
+    letter-spacing:.01em;
+  }
+
+  .modal-grid{
+    padding:14px;
+    display:grid;
+    gap:10px;
+    grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));
+    background:transparent;
+  }
+
+  .choice{
+    border:1px solid #2f2f2f;
+    background:linear-gradient(180deg, #1c1c1c 0%, #131313 100%);
+    border-radius:12px;
+    padding:14px;
+    font-weight:800;
+    font-size:15px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    color:var(--text);
+    transition:transform .08s, border-color .15s, background .15s;
+  }
+  .choice:active{ transform:scale(.97) }
+
+  .choice[data-choice="nieuw"]     { border-color:rgba(239,68,68,.45); }
+  .choice[data-choice="drank"]     { border-color:rgba(245,158,11,.45); }
+  .choice[data-choice="run"]       { border-color:rgba(16,185,129,.45); }
+  .choice[data-choice="koffie"]    { border-color:rgba(139,92,246,.45); }
+  .choice[data-choice="rekening"]  { border-color:rgba(14,165,233,.45); }
+
+  .choice.reset{ border-color:var(--gold-dim); color:var(--gold); }
+
+  .swatch{ width:16px; height:16px; border-radius:6px; box-shadow:0 0 10px currentColor; }
+  .swatch.nieuw{background:var(--nieuw); color:var(--nieuw)}
+  .swatch.drank{background:var(--drank); color:var(--drank)}
+  .swatch.run{background:var(--run); color:var(--run)}
+  .swatch.koffie{background:var(--koffie); color:var(--koffie)}
+  .swatch.rekening{background:var(--rekening); color:var(--rekening)}
+
+  .modal-footer{
+    padding:12px 14px;
+    border-top:1px solid rgba(200,164,91,.2);
+    display:flex;
+    gap:10px;
+    justify-content:space-between;
+    align-items:center;
+    background:linear-gradient(180deg, #141414 0%, #0f0f0f 100%);
+  }
+
+  .link{
+    border:1px solid #2f2f2f;
+    background:linear-gradient(180deg, #1c1c1c 0%, #131313 100%);
+    border-radius:11px;
+    padding:10px 13px;
+    font-weight:800;
+    font-size:14px;
+    cursor:pointer;
+    color:var(--text);
+    transition:transform .08s;
+  }
+  .link:active{ transform:scale(.96) }
+
+  .link.primary{
+    background:linear-gradient(180deg, var(--gold) 0%, var(--gold-dim) 100%);
+    border-color:var(--gold);
+    color:#0b0b0b;
+  }
+
+  .link.danger{
+    border-color:rgba(239,68,68,.6);
+    color:#f87171;
+  }
+
+  .note-editor{
+    display:none;
+    padding:14px;
+    border-top:1px solid rgba(200,164,91,.2);
+  }
+  .note-editor.open{ display:block }
+
+  .note-editor textarea{
+    width:100%;
+    min-height:96px;
+    padding:12px;
+    border:1px solid #2f2f2f;
+    border-radius:12px;
+    font:15px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Arial,sans-serif;
+    resize:vertical;
+    background:#101010;
+    color:var(--text);
+  }
+  .note-editor textarea::placeholder,
+  .input-wrap input::placeholder{ color:var(--muted-2) }
+
+  .note-actions{
+    display:flex;
+    gap:8px;
+    justify-content:flex-end;
+    margin-top:10px;
+    flex-wrap:wrap;
+  }
+
+  .menu-header{ color:var(--gold); letter-spacing:.08em; text-transform:uppercase; font-size:14px; }
+
+  .input-wrap{
+    padding:14px;
+    display:grid;
+    gap:10px;
+  }
+  .input-wrap input{
+    width:100%;
+    padding:13px;
+    border:1px solid #2f2f2f;
+    border-radius:12px;
+    font:16px/1.2 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Arial,sans-serif;
+    background:#101010;
+    color:var(--text);
+  }
+  .input-hint{ font-size:12px; color:var(--muted) }
+
+  /* ===== Fullscreen broadcast ===== */
+  .alert-screen{
+    position:fixed;
+    inset:0;
+    background:
+      radial-gradient(1200px 700px at 50% -20%, #2a1a08 0%, transparent 60%),
+      #0b0b0b;
+    color:#ffffff;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:2147483647;
+    padding:24px;
+    text-align:center;
+    animation: alertIn .18s ease-out;
+  }
+  @keyframes alertIn{ from{opacity:0; transform:scale(.98)} to{opacity:1; transform:scale(1)} }
+  .alert-screen.show{ display:flex }
+
+  .alert-only{
+    font-size:clamp(36px, 9vw, 96px);
+    font-weight:900;
+    line-height:1.08;
+    white-space:pre-wrap;
+    word-break:break-word;
+    max-width:min(1000px, 94vw);
+    color:var(--gold);
+    letter-spacing:-.01em;
+    animation: alertPulse 1.8s ease-in-out infinite;
+    text-shadow:0 0 40px rgba(200,164,91,.3);
+  }
+  @keyframes alertPulse{
+    0%,100% { filter:brightness(1) }
+    50%     { filter:brightness(1.15) }
+  }
+</style>
 </head>
+
 <body>
-  <div id="dashboard-shell">
-    <div class="zd-stage">
-      <div class="zd-frame" id="zd-frame">
-        <div class="zd-wrap">
+<header>
+  <div class="title">Tafeloverzicht</div>
+</header>
 
-          <div class="zd-top">
-            <div class="zd-top-left">
-              <div class="zd-brand">Zusje Roermond</div>
-            </div>
-
-            <div class="zd-clock-wrap">
-              <div class="zd-clock" id="zd-clock">--:--</div>
-              <div class="zd-date" id="zd-date">-- -- ----</div>
-            </div>
-
-            <div class="zd-top-right">.</div>
-          </div>
-
-          <div class="zd-main">
-            <div class="zd-col">
-              <section class="zd-card zd-side">
-                <div class="zd-card-title">Bediening</div>
-                <div class="zd-list" id="zd-serviceChecklists"></div>
-              </section>
-            </div>
-
-            <div class="zd-col">
-              <section class="zd-card zd-center" style="flex:1.1;">
-                <div class="zd-actions" id="zd-actionsList"></div>
-              </section>
-
-              <section class="zd-card zd-center" style="flex:.9;">
-                <div class="zd-card-title">Dagnotities en extra taken</div>
-                <div class="zd-actions" id="zd-periodicList"></div>
-              </section>
-            </div>
-
-            <div class="zd-col">
-              <section class="zd-card zd-side">
-                <div class="zd-card-title">Keuken</div>
-                <div class="zd-list" id="zd-kitchenChecklists"></div>
-              </section>
-            </div>
-          </div>
-
-          <div class="zd-footer">Druk op F voor fullscreen</div>
-        </div>
-      </div>
-    </div>
+<main>
+  <div class="toolbar">
+    <button class="btn" id="resetAll">Reset alles</button>
+    <button class="btn" id="focusBtn">Focusmodus</button>
+    <button class="btn gold" id="helpBtn">HELP</button>
+    <button class="btn gold" id="textBtn">TEXT</button>
   </div>
 
-  <script>
-  (function(){
-    const CONFIG = {
-      sheets:{
-        checklistsJson:"https://script.google.com/macros/s/AKfycbw_Tn0z0s3AJ7CARzHt9sFy8CGhrCe_HzS9ao0KKDtgzq9TR_H-28WBss316I6PDcr7/exec",
-        periodicJson:"https://script.google.com/macros/s/AKfycbxEDSHzBOrrYqkNOCQI6clM6DNuoge55tdATn1XNC63HT7GgPcsZF5AT3dwfaLjEUmV/exec",
-        containersJson:"https://script.google.com/macros/s/AKfycbwPQ1WsRqrJmRuYD8bL6kz5H5sSDNcBsIa0z-WW4hain7fkVhM6HIUQI3DHyhpn-C1zHQ/exec"
-      },
-      refreshMs:15000
-    };
+  <div class="status-bar" id="statusBar">
+    <button class="pill" data-filter="nieuw"><span class="dot nieuw"></span><span class="cnt" data-count="nieuw">0</span> nieuw</button>
+    <button class="pill" data-filter="drank"><span class="dot drank"></span><span class="cnt" data-count="drank">0</span> drank</button>
+    <button class="pill" data-filter="run"><span class="dot run"></span><span class="cnt" data-count="run">0</span> run</button>
+    <button class="pill" data-filter="koffie"><span class="dot koffie"></span><span class="cnt" data-count="koffie">0</span> koffie</button>
+    <button class="pill" data-filter="rekening"><span class="dot rekening"></span><span class="cnt" data-count="rekening">0</span> rekening</button>
+  </div>
 
-    const EMBALLAGE_SCHEDULE = {
-      0: ["Bidfood emballage klaarzetten"],
-      3: ["Bidfood emballage klaarzetten"],
-      5: ["Bidfood emballage klaarzetten"]
-    };
+  <div class="groups" id="groups"></div>
+</main>
 
-    const FALLBACK_CONTAINERS = {
-      0: ["Restafval containers klaarzetten"],
-      1: ["Glas containers klaarzetten"],
-      2: ["Restafval containers klaarzetten"],
-      3: [],
-      4: ["Papier container klaarzetten"],
-      5: [],
-      6: []
-    };
+<!-- Status / Notitie modal -->
+<div id="overlay" class="overlay" aria-modal="true" role="dialog">
+  <div class="modal">
+    <div class="modal-header">Tafel <span id="modalTableNum"></span></div>
 
-    const THURSDAY_PLASTIC_LABEL = "Plastic containers klaarzetten";
-    const YELLOW_CRATES_START = "2025-11-17";
+    <div class="modal-grid" id="statusChoices">
+      <button class="choice" data-choice="nieuw"><span class="swatch nieuw"></span>Nieuw</button>
+      <button class="choice" data-choice="drank"><span class="swatch drank"></span>Drank</button>
+      <button class="choice" data-choice="run"><span class="swatch run"></span>Run</button>
+      <button class="choice" data-choice="koffie"><span class="swatch koffie"></span>Koffie</button>
+      <button class="choice" data-choice="rekening"><span class="swatch rekening"></span>Rekening</button>
+      <button class="choice reset" data-choice="resetnum">Reset (rode cijfers)</button>
+    </div>
 
-    const state = {
-      checklists: [],
-      periodicTasks: [],
-      ordersRules: [
-        {vendor:"Bidfood", weekdays:[2], deadline:"00:00"},
-        {vendor:"Bubbels", weekdays:[3], deadline:"23:00", evenWeeks:true},
-        {vendor:"Zusje Kantoor", weekdays:[3], deadline:"23:00", evenWeeks:true},
-        {vendor:"Bidfood", weekdays:[4], deadline:"00:00"},
-        {vendor:"Bidfood", weekdays:[6], deadline:"00:00"}
-      ]
-    };
+    <div class="note-editor" id="noteEditor">
+      <textarea id="noteInput" placeholder="Notitie voor deze tafel..."></textarea>
+      <div class="note-actions">
+        <button class="link danger" id="deleteNote">Verwijder notitie</button>
+        <button class="link" id="cancelNote">Annuleren</button>
+        <button class="link primary" id="saveNote">Opslaan</button>
+      </div>
+    </div>
 
-    let containersData = null;
+    <div class="modal-footer">
+      <button class="link" id="cancelModal">Sluiten</button>
+      <button class="link primary" id="openNote">Notitie toevoegen/bewerken</button>
+    </div>
+  </div>
+</div>
 
-    const $ = (sel)=>document.querySelector(sel);
-    const pad = (n)=>String(n).padStart(2,"0");
+<!-- HELP menu -->
+<div id="helpOverlay" class="overlay" aria-modal="true" role="dialog">
+  <div class="modal">
+    <div class="modal-header menu-header">Kies hulplocatie</div>
+    <div class="modal-grid">
+      <button class="choice" data-broadcast="Bar Beneden">Bar Beneden</button>
+      <button class="choice" data-broadcast="Bar Boven">Bar Boven</button>
+      <button class="choice" data-broadcast="Run">Run</button>
+      <button class="choice reset" id="helpCancel">Annuleren</button>
+    </div>
+  </div>
+</div>
 
-    const getOpsDate = (d)=>{
-      const x = new Date(d || Date.now());
-      if(x.getHours() < 4) x.setDate(x.getDate() - 1);
-      return x;
-    };
+<!-- TEXT menu -->
+<div id="textOverlay" class="overlay" aria-modal="true" role="dialog">
+  <div class="modal">
+    <div class="modal-header menu-header">Kies bericht</div>
+    <div class="modal-grid">
+      <button class="choice" data-text="Boven uithalen">Boven uithalen</button>
+      <button class="choice" data-text="IJs brengen">IJs brengen</button>
+      <button class="choice" id="openCustomText">Eigen invoer</button>
+      <button class="choice reset" id="textCancel">Annuleren</button>
+    </div>
+  </div>
+</div>
 
-    const fmtNumericDate = (d)=>{
-      return d.toLocaleDateString("nl-NL",{
-        day:"2-digit",
-        month:"2-digit",
-        year:"numeric"
-      });
-    };
+<!-- Eigen invoer -->
+<div id="customTextOverlay" class="overlay" aria-modal="true" role="dialog">
+  <div class="modal">
+    <div class="modal-header">Eigen bericht</div>
+    <div class="input-wrap">
+      <input id="customTextInput" type="text" maxlength="80" placeholder="Typ een bericht (max 80 tekens)..." />
+      <div class="input-hint">Wordt direct op alle apparaten getoond. Verdwijnt overal bij 1 tik op 1 scherm.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="link" id="customTextClose">Sluiten</button>
+      <button class="link primary" id="customTextSend">Versturen</button>
+    </div>
+  </div>
+</div>
 
-    const weekNumber = d=>{
-      const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-      const dn = (t.getUTCDay()+6)%7;
-      t.setUTCDate(t.getUTCDate()-dn+3);
-      const fT = new Date(Date.UTC(t.getUTCFullYear(),0,4));
-      return 1 + Math.round(((t-fT)/86400000 - 3 + ((fT.getUTCDay()+6)%7))/7);
-    };
+<!-- Fullscreen broadcast -->
+<div id="alertScreen" class="alert-screen" aria-live="assertive" aria-atomic="true">
+  <div id="alertText" class="alert-only"></div>
+</div>
 
-    const isEvenWeek = d => weekNumber(d)%2===0;
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ===== Supabase ===== */
+const SUPABASE_URL  = "https://xiwdbvxnjcrdwjhmpjnf.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhpd2RidnhuamNyZHdqaG1wam5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ2NjE1NzAsImV4cCI6MjA3MDIzNzU3MH0.d14QNY5Pof9j3zmlbs-5gBTs25s6xo_XYhyVbWE2P1k";
+const sb = (window.supabase && typeof window.supabase.createClient === 'function')
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
+  : null;
+if(!sb) console.warn('Supabase client niet geladen — UI draait offline (geen sync).');
 
-    const opsDateStrToday = ()=>{
-      const d = getOpsDate(new Date());
-      return d.toISOString().slice(0,10);
-    };
+/* ===== Broadcast protocol ===== */
+const BROADCAST_CLEAR = "__CLEAR__";
 
-    const ymdInAmsterdam = (dateLike)=>{
-      const tz = "Europe/Amsterdam";
-      if(!dateLike) return null;
+/* ===== Config ===== */
+const RANGES_BENEDEN = [[1,13]];
+const RANGES_BOVEN   = [[20,58]];
+const GROUPS = [
+  { label:'Beneden', zone:'bt', ranges:RANGES_BENEDEN },
+  { label:'Boven',   zone:'boven', ranges:RANGES_BOVEN }
+];
 
-      if(typeof dateLike === "string" && /^\d{4}-\d{2}-\d{2}/.test(dateLike)){
-        return dateLike.slice(0,10);
-      }
+const STATUS_CLASSES = {
+  nieuw:"status-nieuw",
+  drank:"status-drank",
+  run:"status-run",
+  koffie:"status-koffie",
+  rekening:"status-rekening"
+};
 
-      const d = new Date(dateLike);
-      if(isNaN(d)) return null;
+/* Urgentie-drempels in seconden, per status: [warn, critical] */
+const URGENCY = {
+  nieuw:    [180, 420],  // 3 min / 7 min
+  drank:    [120, 300],  // 2 min / 5 min
+  run:      [120, 300],
+  koffie:   [120, 300],
+  rekening: [180, 360]   // 3 min / 6 min
+};
 
-      const parts = new Intl.DateTimeFormat("nl-NL",{
-        timeZone: tz,
-        year:"numeric",
-        month:"2-digit",
-        day:"2-digit"
-      }).formatToParts(d);
+function expandRanges(r){ const out=[]; for(const [a,b] of r){ for(let i=a;i<=b;i++) out.push(i);} return out; }
+function keyOf(zone, n){ return `${zone}-${n}`; }
 
-      let y,m,da;
-      for(const p of parts){
-        if(p.type==="year") y=p.value;
-        else if(p.type==="month") m=p.value;
-        else if(p.type==="day") da=p.value;
-      }
-      return (y && m && da) ? `${y}-${m}-${da}` : null;
-    };
+/* ===== Elements ===== */
+const groupsEl = document.getElementById('groups');
 
-    const normalizeText = (str)=>String(str || "").toLowerCase().replace(/\s+/g," ").trim();
+const overlay = document.getElementById('overlay');
+const modalTableNum = document.getElementById('modalTableNum');
+const statusChoices = document.getElementById('statusChoices');
+const noteEditor = document.getElementById('noteEditor');
+const noteInput = document.getElementById('noteInput');
+const openNoteBtn = document.getElementById('openNote');
+const cancelModalBtn = document.getElementById('cancelModal');
+const saveNoteBtn = document.getElementById('saveNote');
+const deleteNoteBtn = document.getElementById('deleteNote');
+const cancelNoteBtn = document.getElementById('cancelNote');
 
-    function displayChecklistName(name){
-      const n = normalizeText(name);
+const resetAllBtn = document.getElementById('resetAll');
+const focusBtn = document.getElementById('focusBtn');
 
-      if (n.includes("open")) return "Openen";
-      if (n.includes("bediening onder")) return "Bediening onder";
-      if (n.includes("bediening boven")) return "Bediening boven";
-      if (n === "beneden" || n.includes("sluitlijst beneden")) return "Bediening onder";
-      if (n === "boven" || n.includes("sluitlijst boven")) return "Bediening boven";
-      if (n.includes("run")) return "Run";
-      if (n.includes("sluitlijst keuken")) return "Sluitlijst keuken";
-      if (n.includes("sluitlijst spoel")) return "Sluitlijst spoel";
-      if (n.includes("spoel")) return "Spoelkeuken";
-      if (n.includes("keuken")) return "Keuken";
-      if (n.includes("bar beneden")) return "Bar beneden";
-      if (n.includes("bar boven")) return "Bar boven";
+const helpBtnEl = document.getElementById('helpBtn');
+const helpOverlayEl = document.getElementById('helpOverlay');
+const helpCancelEl = document.getElementById('helpCancel');
 
-      return name;
+const textBtnEl = document.getElementById('textBtn');
+const textOverlayEl = document.getElementById('textOverlay');
+const textCancelEl = document.getElementById('textCancel');
+const openCustomTextEl = document.getElementById('openCustomText');
+
+const customTextOverlayEl = document.getElementById('customTextOverlay');
+const customTextInputEl = document.getElementById('customTextInput');
+const customTextSendEl = document.getElementById('customTextSend');
+const customTextCloseEl = document.getElementById('customTextClose');
+
+const alertScreenEl = document.getElementById('alertScreen');
+const alertTextEl = document.getElementById('alertText');
+
+const statusBarEl = document.getElementById('statusBar');
+
+/* ===== State ===== */
+let rows = new Map();
+let pendingCell = null;
+let timerInterval = null;
+let tablesChannel = null;
+let eventsChannel = null;
+let alertOpen = false;
+let activeFilter = null; // null | 'nieuw' | 'drank' | ...
+let prevUrgencyLevel = new Map(); // key -> 0/1/2, voor ding-sound bij crit
+
+/* ===== Audio (tiny WebAudio beep) ===== */
+let audioCtx = null;
+function ensureAudio(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  }
+  return audioCtx;
+}
+function beep({freq=880, dur=.14, type='sine', vol=.25, delay=0}={}){
+  const ctx = ensureAudio();
+  if(!ctx) return;
+  const t0 = ctx.currentTime + delay;
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t0);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol, t0+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  osc.connect(g).connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0+dur+0.02);
+}
+function soundBroadcast(){ beep({freq:880,dur:.12,vol:.28}); beep({freq:1320,dur:.12,vol:.22,delay:.14}); }
+function soundUrgent(){ beep({freq:660,dur:.09,type:'triangle',vol:.18}); beep({freq:990,dur:.09,type:'triangle',vol:.14,delay:.11}); }
+function haptic(ms=15){ if(navigator.vibrate) navigator.vibrate(ms); }
+
+// unlock audio on first interaction
+function unlockAudioOnce(){
+  const c = ensureAudio();
+  if(c && c.state === 'suspended') c.resume();
+  document.removeEventListener('touchstart', unlockAudioOnce);
+  document.removeEventListener('click', unlockAudioOnce);
+}
+document.addEventListener('touchstart', unlockAudioOnce, {once:true, passive:true});
+document.addEventListener('click', unlockAudioOnce, {once:true});
+
+/* ===== Data ===== */
+async function fetchAll(){
+  if(!sb) return;
+  try{
+    const { data, error } = await sb.from('tables_status').select('*');
+    if(error){ console.error('fetchAll error', error); return; }
+    rows = new Map((data||[]).map(r=>[keyOf(r.zone,r.table_num), r]));
+  }catch(e){ console.error('fetchAll exception', e); }
+}
+
+async function upsertTable(zone, num, patch){
+  const prev = rows.get(keyOf(zone,num)) || { zone, table_num:num };
+  const payload = {
+    status:null, status_started:null, note:null, num_marked:false,
+    ...prev,
+    ...patch,
+    updated_at: new Date().toISOString()
+  };
+  // Optimistic local update zodat UI ook zonder netwerk werkt
+  rows.set(keyOf(zone,num), payload);
+  if(!sb) return payload;
+  try{
+    const { data, error } = await sb.from('tables_status').upsert(payload).select().single();
+    if(error){ console.error('upsert error', error); return payload; }
+    rows.set(keyOf(zone,num), data);
+    return data;
+  }catch(e){ console.error('upsert exception', e); return payload; }
+}
+
+/* ===== UI helpers ===== */
+function applyStatus(cell, status){
+  cell.classList.remove(...Object.values(STATUS_CLASSES));
+  if(status){
+    cell.classList.add(STATUS_CLASSES[status]);
+    cell.setAttribute('data-status', status);
+  } else {
+    cell.removeAttribute('data-status');
+    cell.classList.remove('urgency-warn','urgency-crit','next-up','filter-match');
+  }
+}
+function setNote(cell, txt){ cell.querySelector('.note').textContent = txt || ''; }
+function setTimer(cell, txt){ cell.querySelector('.timer').textContent = txt || ''; }
+function setNumFlag(cell, flagged){
+  cell.querySelector('.num').classList.toggle('num-flagged', !!flagged);
+  // visuele aanwijzing in idle-staat
+  if(!cell.hasAttribute('data-status')){
+    cell.classList.toggle('num-flagged-only', !!flagged);
+  } else {
+    cell.classList.remove('num-flagged-only');
+  }
+}
+
+function fmtElapsed(ms){
+  const total = Math.max(0, Math.floor(ms/1000));
+  const s = total % 60;
+  const m = Math.floor(total/60) % 60;
+  const h = Math.floor(total/3600);
+  const pad = n => n<10 ? '0'+n : ''+n;
+  return h ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+}
+
+/* Dynamische gap */
+function applyResponsiveGap(){
+  const minSide = Math.min(window.innerWidth, window.innerHeight);
+  let gap = Math.round(minSide / 95);
+  gap = Math.max(5, Math.min(12, gap));
+  document.documentElement.style.setProperty('--gap', gap + 'px');
+}
+
+/* Tiles maximaal uitsmeren */
+function layoutToFit(){
+  const gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 8;
+
+  const avail = groupsEl.getBoundingClientRect();
+  const availW = Math.floor(avail.width);
+  const availH = Math.floor(avail.height);
+
+  const labels = groupsEl.querySelectorAll('.group-label');
+  let labelH = 0;
+  labels.forEach(l=> labelH += Math.ceil(l.getBoundingClientRect().height));
+
+  const betweenGroups = 8;
+  const N_b = expandRanges(RANGES_BENEDEN).length;
+  const N_t = expandRanges(RANGES_BOVEN).length;
+
+  let best = null;
+
+  for(let cb=1; cb<=N_b; cb++){
+    const rb = Math.ceil(N_b / cb);
+    const tileW_b = Math.floor((availW - (cb-1)*gap) / cb);
+
+    for(let ct=1; ct<=N_t; ct++){
+      const rt = Math.ceil(N_t / ct);
+      const tileW_t = Math.floor((availW - (ct-1)*gap) / ct);
+
+      const totalRows = rb + rt;
+      const gapsV = (rb-1 + rt-1) * gap + betweenGroups;
+
+      const tileH_limit = Math.floor((availH - labelH - gapsV) / totalRows);
+      const tileW_limit = Math.min(tileW_b, tileW_t);
+      const tile = Math.max(0, Math.min(tileH_limit, tileW_limit));
+
+      if(!best || tile > best.tile){ best = { cb, ct, rb, rt, tile }; }
     }
+  }
 
-    function classifyChecklist(name){
-      const n = normalizeText(name);
+  if(!best || best.tile < 28){
+    best = { cb:6, ct:10, rb:Math.ceil(N_b/6), rt:Math.ceil(N_t/10), tile:28 };
+  }
 
-      if (
-        n.includes("keuken") ||
-        n.includes("spoel") ||
-        n.includes("bar beneden") ||
-        n.includes("bar boven") ||
-        n.includes("sluitlijst keuken") ||
-        n.includes("sluitlijst spoel")
-      ) return "kitchen";
+  document.documentElement.style.setProperty('--tile', best.tile + 'px');
 
-      return "service";
-    }
+  document.querySelectorAll('.group-grid').forEach(grid=>{
+    const zone = grid.dataset.zone;
+    grid.style.setProperty('--cols', (zone === 'bt') ? best.cb : best.ct);
+  });
 
-    async function fetchChecklists(){
-      try{
-        const r = await fetch(CONFIG.sheets.checklistsJson,{cache:"no-store"});
-        if(r.ok){
-          const j = await r.json();
-          if(Array.isArray(j.items)){
-            state.checklists = j.items
-              .map(it=>({name:String(it.name||"").trim(), done:!!it.done}))
-              .filter(x=>x.name);
-          }
+  const benedenGroup = document.querySelector('.group[data-zone="bt"]');
+  const bovenGroup   = document.querySelector('.group[data-zone="boven"]');
+  if(benedenGroup) benedenGroup.style.flex = `${best.rb} 1 0%`;
+  if(bovenGroup)   bovenGroup.style.flex   = `${best.rt} 1 0%`;
+}
+
+/* ===== Render ===== */
+function render(){
+  if(timerInterval){ clearInterval(timerInterval); timerInterval=null; }
+  groupsEl.innerHTML = '';
+
+  for(const group of GROUPS){
+    const nums = expandRanges(group.ranges);
+
+    const wrap = document.createElement('section');
+    wrap.className = 'group';
+    wrap.dataset.zone = group.zone;
+
+    const label = document.createElement('div');
+    label.className = 'group-label';
+    label.textContent = group.label;
+
+    const grid = document.createElement('div');
+    grid.className = 'group-grid';
+    grid.dataset.zone = group.zone;
+
+    wrap.appendChild(label);
+    wrap.appendChild(grid);
+    groupsEl.appendChild(wrap);
+
+    for(const n of nums){
+      const r = rows.get(keyOf(group.zone,n)) || {};
+
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'table';
+      cell.dataset.zone = group.zone;
+      cell.dataset.num = n;
+
+      cell.innerHTML = `
+        <div class="num">${n}</div>
+        <div class="note"></div>
+        <div class="timer"></div>
+      `;
+
+      applyStatus(cell, r.status || null);
+      setNote(cell, r.note || '');
+      setNumFlag(cell, !!r.num_marked);
+
+      cell.addEventListener('click', async ()=>{
+        const cur = rows.get(keyOf(group.zone,n)) || {};
+        const hasStatus = !!cur.status || cell.hasAttribute('data-status');
+
+        // 1 klik op gekleurde tafel = status wissen (num_marked blijft)
+        if(hasStatus){
+          haptic(12);
+          const keepFlag = !!cur.num_marked;
+          await upsertTable(group.zone, n, { status:null, status_started:null, num_marked: keepFlag });
+          applyStatus(cell, null);
+          setTimer(cell, '');
+          setNumFlag(cell, keepFlag);
+          refreshDerived();
+          return;
         }
-      }catch(e){
-        console.warn("Checklist fetch fail",e);
-      }
-    }
 
-    async function fetchPeriodic(){
-      const u = CONFIG.sheets.periodicJson;
-      if(!u) return;
-      try{
-        const sep = u.includes("?") ? "&" : "?";
-        const r = await fetch(u + sep + "tz=Europe/Amsterdam",{cache:"no-store"});
-        if(r.ok){
-          const j = await r.json();
-          let items = (j && j.ok && Array.isArray(j.items)) ? j.items : [];
-          const todayStr = opsDateStrToday();
-
-          items = items.filter(ev=>{
-            const s = ev.start || ev.startTime || ev.date || ev.dateISO;
-            if(!s) return true;
-            const evStr = ymdInAmsterdam(s);
-            if(!evStr) return false;
-            return evStr === todayStr;
-          });
-
-          state.periodicTasks = items.map(ev=>({
-            title: ev.title,
-            allDay: !!ev.allDay,
-            start: ev.start || ev.startTime || ev.date || ev.dateISO || null
-          }));
-        }
-      }catch(e){
-        console.warn("Periodic fail",e);
-      }
-    }
-
-    async function fetchContainers(){
-      const url = CONFIG.sheets.containersJson;
-      if(!url) return null;
-      try{
-        const sep = url.includes("?") ? "&" : "?";
-        const r = await fetch(url + sep + "tz=Europe/Amsterdam",{cache:"no-store"});
-        if(!r.ok) throw new Error("HTTP "+r.status);
-        return await r.json();
-      }catch(e){
-        console.warn("Containers endpoint faalde:", e);
-        return null;
-      }
-    }
-
-    async function loadAll(){
-      const [a,b,c] = await Promise.allSettled([
-        fetchChecklists(),
-        fetchPeriodic(),
-        fetchContainers()
-      ]);
-      containersData = (c && c.status==="fulfilled") ? c.value : null;
-      renderAll();
-    }
-
-    function renderHeader(){
-      const n = new Date();
-      const ops = getOpsDate(n);
-      $("#zd-clock").textContent = `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
-      $("#zd-date").textContent = fmtNumericDate(ops);
-    }
-
-    function renderChecklistGroup(targetId, items){
-      const wrap = document.getElementById(targetId);
-      wrap.innerHTML = "";
-
-      if(!items.length){
-        wrap.innerHTML = `
-          <div class="zd-check-item">
-            <div class="zd-check-left">
-              <span class="zd-dot bad"></span>
-              <div class="zd-name bad">Geen checklists</div>
-            </div>
-          </div>
-        `;
-        return;
-      }
-
-      items.forEach(c=>{
-        const done = !!c.done;
-        const dotClass = done ? "ok" : "bad";
-        const textClass = done ? "ok" : "bad";
-
-        const el = document.createElement("div");
-        el.className = "zd-check-item";
-        el.innerHTML = `
-          <div class="zd-check-left">
-            <span class="zd-dot ${dotClass}"></span>
-            <div class="zd-name ${textClass}">${displayChecklistName(c.name)}</div>
-          </div>
-        `;
-        wrap.appendChild(el);
-      });
-    }
-
-    function renderChecklists(){
-      const service = [];
-      const kitchen = [];
-
-      state.checklists.forEach(c=>{
-        if(classifyChecklist(c.name) === "kitchen") kitchen.push(c);
-        else service.push(c);
+        haptic(10);
+        pendingCell = cell;
+        modalTableNum.textContent = n;
+        noteInput.value = cur.note || '';
+        showChoicesPane();
+        overlay.classList.add('open');
       });
 
-      const serviceOrder = ["Openen","Bediening onder","Bediening boven","Run"];
-      service.sort((a,b)=>{
-        const ai = serviceOrder.indexOf(displayChecklistName(a.name));
-        const bi = serviceOrder.indexOf(displayChecklistName(b.name));
-        return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-      });
-
-      renderChecklistGroup("zd-serviceChecklists", service);
-      renderChecklistGroup("zd-kitchenChecklists", kitchen);
+      grid.appendChild(cell);
     }
+  }
 
-    function isYellowCratesDay(ops){
-      const start = new Date(YELLOW_CRATES_START + "T00:00:00");
-      const msPerDay = 24*60*60*1000;
-      const opsMid = new Date(ops);
-      opsMid.setHours(0,0,0,0);
-      const daysDiff = Math.floor((opsMid - start.getTime())/msPerDay);
-      if(daysDiff < 0) return false;
-      const weeksDiff = Math.floor(daysDiff / 7);
-      return weeksDiff % 2 === 0;
-    }
-
-    function buildMainActions(){
-      const now = new Date();
-      const ops = getOpsDate(now);
-      const dow = ops.getDay();
-      const todayStr = opsDateStrToday();
-      const even = isEvenWeek(ops);
-
-      const actions = [];
-
-      let containers = [];
-      if (containersData) {
-        if (Array.isArray(containersData.items)) {
-          containers = containersData.items
-            .filter(it=>{
-              const s = it.start || it.startTime || it.date || it.dateISO;
-              if(!s) return true;
-              const evStr = ymdInAmsterdam(s);
-              if(!evStr) return false;
-              return evStr === todayStr;
-            })
-            .map(it=> String(it.title || it.name || "").trim())
-            .filter(Boolean);
-        } else if (Array.isArray(containersData.containers)) {
-          containers = containersData.containers.slice();
-        }
-      }
-
-      if (containers.length === 0) {
-        containers = FALLBACK_CONTAINERS[dow] ? [...FALLBACK_CONTAINERS[dow]] : [];
-        if (dow === 4 && even) {
-          if(!containers.includes(THURSDAY_PLASTIC_LABEL)) containers.push(THURSDAY_PLASTIC_LABEL);
-        }
-      }
-
-      containers.forEach(x=>actions.push({label:x, pending:false}));
-
-      const emballage = EMBALLAGE_SCHEDULE[dow] ? [...EMBALLAGE_SCHEDULE[dow]] : [];
-      if(dow===1 && isYellowCratesDay(ops)){
-        emballage.push("Gele Zusje kratten klaarzetten");
-      }
-      emballage.forEach(x=>actions.push({label:x, pending:false}));
-
-      const todayOrders = state.ordersRules.filter(r=>(r.weekdays||[]).includes(dow)&&(!r.evenWeeks||even));
-      if(!todayOrders.length){
-        actions.push({label:"Geen bestellingen", pending:true});
+  function tick(){
+    const now = Date.now();
+    document.querySelectorAll('.table').forEach(cell=>{
+      const zone = cell.dataset.zone;
+      const num = Number(cell.dataset.num);
+      const r = rows.get(keyOf(zone,num));
+      if(r && r.status && r.status_started){
+        const ms = now - Date.parse(r.status_started);
+        setTimer(cell, fmtElapsed(ms));
+        updateUrgency(cell, r.status, Math.floor(ms/1000));
       } else {
-        todayOrders.forEach(r=>{
-          let limit = new Date(ops);
-          if(r.deadline==="00:00"){
-            limit.setDate(limit.getDate()+1);
-            limit.setHours(0,0,0,0);
-          }else{
-            const [h,m]=(r.deadline||"23:59").split(":").map(Number);
-            limit.setHours(h,m||0,0,0);
-          }
-          const diff = Math.round((limit-now)/60000);
-          let label = `${r.vendor} bestellen`;
-          if(diff < 0) label = `${r.vendor} bestellen — te laat`;
-          else if(diff <= 60) label = `${r.vendor} bestellen — binnen ${diff} min`;
-
-          actions.push({label, pending:false});
-        });
+        setTimer(cell, '');
       }
-
-      return actions;
-    }
-
-    function renderMainActions(){
-      const wrap = $("#zd-actionsList");
-      wrap.innerHTML = "";
-
-      const actions = buildMainActions();
-
-      if(!actions.length){
-        wrap.innerHTML = `<div class="zd-empty">Geen acties voor vandaag</div>`;
-        return;
-      }
-
-      actions.forEach(item=>{
-        const el = document.createElement("div");
-        el.className = "zd-action" + (item.pending ? " pending" : "");
-        el.innerHTML = `
-          <span class="zd-dot"></span>
-          <div class="zd-action-text">${item.label}</div>
-        `;
-        wrap.appendChild(el);
-      });
-    }
-
-    function renderPeriodic(){
-      const list = $("#zd-periodicList");
-      list.innerHTML = "";
-      const t = state.periodicTasks || [];
-
-      if(!t.length){
-        list.innerHTML = `<div class="zd-empty">Geen dagnotities of extra taken</div>`;
-        return;
-      }
-
-      t.forEach(x=>{
-        const el = document.createElement("div");
-        el.className = "zd-action";
-        el.innerHTML = `
-          <span class="zd-dot"></span>
-          <div class="zd-action-text">${x.title}</div>
-        `;
-        list.appendChild(el);
-      });
-    }
-
-    function renderAll(){
-      renderHeader();
-      renderChecklists();
-      renderMainActions();
-      renderPeriodic();
-      fitFrame();
-    }
-
-    const FRAME_W = 1920, FRAME_H = 1080, SAFE_MARGIN_PX = 8;
-
-    function fitFrame(){
-      const shell = document.getElementById('dashboard-shell');
-      const frame = document.getElementById('zd-frame');
-
-      const viewW = Math.max(1, window.innerWidth  || shell.clientWidth  || document.documentElement.clientWidth);
-      const viewH = Math.max(1, window.innerHeight || shell.clientHeight || document.documentElement.clientHeight);
-
-      const base = Math.min(
-        (viewW - SAFE_MARGIN_PX) / FRAME_W,
-        (viewH - SAFE_MARGIN_PX) / FRAME_H
-      );
-
-      frame.style.transform = `translate(-50%, -50%) scale(${base * 0.99})`;
-    }
-
-    async function toggleFS(){
-      try{
-        if(document.fullscreenElement){
-          await document.exitFullscreen();
-        }else{
-          const el = document.getElementById('dashboard-shell');
-          if(el.requestFullscreen) await el.requestFullscreen();
-          else if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
-        }
-      }catch(_){}
-    }
-
-    document.addEventListener('keydown', (e)=>{
-      if((e.key||'').toLowerCase()==='f') toggleFS();
     });
+    updateNextUp();
+  }
+  tick();
+  timerInterval = setInterval(tick, 1000);
 
-    window.addEventListener('resize', fitFrame);
-    window.addEventListener('orientationchange', fitFrame);
-    document.addEventListener('fullscreenchange', fitFrame);
-    document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) fitFrame(); });
-    if (document.fonts && document.fonts.ready) { document.fonts.ready.finally(fitFrame); }
+  applyResponsiveGap();
+  layoutToFit();
+  refreshDerived();
+}
 
-    fitFrame();
-    renderHeader();
-    loadAll();
-    setInterval(()=>{ renderHeader(); fitFrame(); },1000);
-    setInterval(()=>{ loadAll(); }, CONFIG.refreshMs);
-  })();
-  </script>
+/* ===== Urgency ===== */
+function updateUrgency(cell, status, elapsedSec){
+  const thr = URGENCY[status];
+  if(!thr){ cell.classList.remove('urgency-warn','urgency-crit'); return; }
+  const [warn, crit] = thr;
+  let level = 0;
+  if(elapsedSec >= crit) level = 2;
+  else if(elapsedSec >= warn) level = 1;
+
+  cell.classList.toggle('urgency-warn', level===1);
+  cell.classList.toggle('urgency-crit', level===2);
+
+  // subtiele ding bij overgang naar critical
+  const k = `${cell.dataset.zone}-${cell.dataset.num}`;
+  const prev = prevUrgencyLevel.get(k) || 0;
+  if(level === 2 && prev < 2){
+    soundUrgent();
+    haptic(30);
+  }
+  prevUrgencyLevel.set(k, level);
+}
+
+/* ===== Next-up: per status de langst wachtende krijgt een ring ===== */
+function updateNextUp(){
+  document.querySelectorAll('.table.next-up').forEach(c=> c.classList.remove('next-up'));
+
+  const oldestPerStatus = {}; // status -> {key, started}
+  for(const [k, r] of rows.entries()){
+    if(!r.status || !r.status_started) continue;
+    const t = Date.parse(r.status_started);
+    if(!oldestPerStatus[r.status] || t < oldestPerStatus[r.status].started){
+      oldestPerStatus[r.status] = { key:k, started:t, zone:r.zone, num:r.table_num };
+    }
+  }
+
+  // Alleen ring tonen als er minstens 2 van die status zijn
+  const countsByStatus = countsByStatusNow();
+  for(const status in oldestPerStatus){
+    if((countsByStatus[status]||0) < 2) continue;
+    const o = oldestPerStatus[status];
+    const cell = document.querySelector(`.table[data-zone="${o.zone}"][data-num="${o.num}"]`);
+    if(cell) cell.classList.add('next-up');
+  }
+}
+
+function countsByStatusNow(){
+  const c = { nieuw:0, drank:0, run:0, koffie:0, rekening:0 };
+  for(const r of rows.values()){
+    if(r.status && c.hasOwnProperty(r.status)) c[r.status]++;
+  }
+  return c;
+}
+
+/* ===== Status counter bar ===== */
+function updateStatusCounts(){
+  const c = countsByStatusNow();
+  statusBarEl.querySelectorAll('.pill').forEach(pill=>{
+    const s = pill.dataset.filter;
+    const val = c[s] || 0;
+    pill.querySelector(`[data-count="${s}"]`).textContent = val;
+    pill.setAttribute('data-zero', val === 0 ? 'true' : 'false');
+    pill.setAttribute('data-active', activeFilter === s ? 'true' : 'false');
+  });
+}
+
+/* Filter toepassen op cellen */
+function applyFilterClasses(){
+  document.body.classList.toggle('has-filter', !!activeFilter);
+  document.querySelectorAll('.table').forEach(cell=>{
+    const match = activeFilter && cell.getAttribute('data-status') === activeFilter;
+    cell.classList.toggle('filter-match', !!match);
+  });
+}
+
+function refreshDerived(){
+  updateStatusCounts();
+  applyFilterClasses();
+  updateNextUp();
+}
+
+statusBarEl.addEventListener('click', (e)=>{
+  const pill = e.target.closest('.pill');
+  if(!pill) return;
+  const s = pill.dataset.filter;
+  activeFilter = (activeFilter === s) ? null : s;
+  haptic(8);
+  refreshDerived();
+});
+
+/* Focus mode */
+focusBtn.addEventListener('click', ()=>{
+  const on = !document.body.classList.contains('focus-on');
+  document.body.classList.toggle('focus-on', on);
+  focusBtn.classList.toggle('focus-on', on);
+  haptic(10);
+});
+
+/* ===== Modal panes ===== */
+function showChoicesPane(){ statusChoices.style.display = 'grid'; noteEditor.classList.remove('open'); }
+function showNotePane(){ statusChoices.style.display = 'none'; noteEditor.classList.add('open'); }
+
+/* Status choices */
+overlay.querySelectorAll('.choice[data-choice]').forEach(btn=>{
+  btn.addEventListener('click', async ()=>{
+    if(!pendingCell) return;
+    const choice = btn.dataset.choice;
+    const zone = pendingCell.dataset.zone;
+    const num = Number(pendingCell.dataset.num);
+
+    if(choice === 'resetnum'){
+      haptic(12);
+      await upsertTable(zone, num, { num_marked:false });
+      setNumFlag(pendingCell, false);
+      overlay.classList.remove('open'); pendingCell=null; showChoicesPane();
+      refreshDerived();
+      return;
+    }
+
+    haptic(18);
+    const patch = { status: choice, status_started: new Date().toISOString() };
+    if(choice === 'nieuw') patch.num_marked = true;
+
+    await upsertTable(zone, num, patch);
+
+    applyStatus(pendingCell, choice);
+    if(choice === 'nieuw') setNumFlag(pendingCell, true);
+
+    overlay.classList.remove('open');
+    pendingCell = null;
+    refreshDerived();
+  });
+});
+
+/* Note */
+openNoteBtn.addEventListener('click', ()=>{ if(pendingCell) showNotePane(); });
+saveNoteBtn.addEventListener('click', async ()=>{
+  if(!pendingCell) return;
+  const zone = pendingCell.dataset.zone;
+  const num = Number(pendingCell.dataset.num);
+  const txt = noteInput.value.trim();
+  await upsertTable(zone, num, { note: txt || null });
+  setNote(pendingCell, txt);
+  overlay.classList.remove('open'); pendingCell=null; showChoicesPane();
+});
+deleteNoteBtn.addEventListener('click', async ()=>{
+  if(!pendingCell) return;
+  const zone = pendingCell.dataset.zone;
+  const num = Number(pendingCell.dataset.num);
+  await upsertTable(zone, num, { note: null });
+  setNote(pendingCell, '');
+  overlay.classList.remove('open'); pendingCell=null; showChoicesPane();
+});
+cancelNoteBtn.addEventListener('click', showChoicesPane);
+
+cancelModalBtn.addEventListener('click', ()=>{ overlay.classList.remove('open'); pendingCell=null; showChoicesPane(); });
+overlay.addEventListener('click', (e)=>{ if(e.target===overlay){ overlay.classList.remove('open'); pendingCell=null; showChoicesPane(); }});
+
+/* Reset */
+async function fullResetAll(){
+  for(const g of GROUPS){
+    for(const n of expandRanges(g.ranges)){
+      const r = rows.get(keyOf(g.zone,n));
+      if(!r) continue;
+      await upsertTable(g.zone, n, { status:null, status_started:null, num_marked:false });
+    }
+  }
+  prevUrgencyLevel.clear();
+  render();
+}
+resetAllBtn.addEventListener('click', fullResetAll);
+
+/* Auto reset 02:00 */
+async function autoDailyResetCheck(){
+  const now = new Date();
+  const hh = now.getHours(), mm = now.getMinutes();
+  const todayKey = now.toISOString().slice(0,10);
+  const last = localStorage.getItem('last_auto_reset');
+  if(hh === 2 && mm < 5 && last !== todayKey){
+    await fullResetAll();
+    localStorage.setItem('last_auto_reset', todayKey);
+  }
+}
+setInterval(autoDailyResetCheck, 60_000);
+
+/* ===== Broadcast ===== */
+function hideBroadcastLocal(){
+  alertScreenEl.classList.remove('show');
+  alertOpen = false;
+}
+function showBroadcastLocal(message){
+  const msg = (message || '').toString().trim();
+  if(!msg) return;
+  alertTextEl.textContent = msg;
+  alertScreenEl.classList.add('show');
+  alertOpen = true;
+  soundBroadcast();
+  haptic([60,60,60]);
+}
+async function clearBroadcastGlobal(){
+  if(!sb) return;
+  try{
+    const { error } = await sb.from('help_events').insert({ kind: BROADCAST_CLEAR });
+    if(error) console.error('broadcast clear insert error', error);
+  }catch(e){ console.error('broadcast clear exception', e); }
+}
+async function sendBroadcast(message){
+  const msg = (message || '').toString().trim();
+  if(!msg) return;
+  if(!sb) return;
+  try{
+    const { error } = await sb.from('help_events').insert({ kind: msg });
+    if(error) console.error('broadcast insert error', error);
+  }catch(e){ console.error('broadcast send exception', e); }
+}
+
+alertScreenEl.addEventListener('click', async ()=>{
+  if(!alertOpen) return;
+  hideBroadcastLocal();
+  await clearBroadcastGlobal();
+});
+
+/* HELP */
+helpBtnEl.addEventListener('click', ()=> helpOverlayEl.classList.add('open'));
+helpOverlayEl.addEventListener('click', (e)=>{ if(e.target===helpOverlayEl) helpOverlayEl.classList.remove('open'); });
+helpCancelEl.addEventListener('click', ()=> helpOverlayEl.classList.remove('open'));
+helpOverlayEl.querySelectorAll('[data-broadcast]').forEach(btn=>{
+  btn.addEventListener('click', async ()=>{
+    const msg = btn.dataset.broadcast;
+    helpOverlayEl.classList.remove('open');
+    await sendBroadcast(msg);
+    showBroadcastLocal(msg);
+  });
+});
+
+/* TEXT */
+textBtnEl.addEventListener('click', ()=> textOverlayEl.classList.add('open'));
+textOverlayEl.addEventListener('click', (e)=>{ if(e.target===textOverlayEl) textOverlayEl.classList.remove('open'); });
+textCancelEl.addEventListener('click', ()=> textOverlayEl.classList.remove('open'));
+
+textOverlayEl.querySelectorAll('[data-text]').forEach(btn=>{
+  btn.addEventListener('click', async ()=>{
+    const msg = btn.dataset.text;
+    textOverlayEl.classList.remove('open');
+    await sendBroadcast(msg);
+    showBroadcastLocal(msg);
+  });
+});
+openCustomTextEl.addEventListener('click', ()=>{
+  textOverlayEl.classList.remove('open');
+  customTextInputEl.value = '';
+  customTextOverlayEl.classList.add('open');
+  setTimeout(()=>customTextInputEl.focus(), 50);
+});
+customTextCloseEl.addEventListener('click', ()=> customTextOverlayEl.classList.remove('open'));
+customTextOverlayEl.addEventListener('click', (e)=>{ if(e.target===customTextOverlayEl) customTextOverlayEl.classList.remove('open'); });
+
+async function sendCustom(){
+  const msg = customTextInputEl.value.trim();
+  if(!msg) return;
+  customTextOverlayEl.classList.remove('open');
+  await sendBroadcast(msg);
+  showBroadcastLocal(msg);
+}
+customTextSendEl.addEventListener('click', sendCustom);
+customTextInputEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); sendCustom(); }});
+
+/* Realtime */
+function subscribeRealtimeTables(){
+  if(!sb) return;
+  if(tablesChannel) sb.removeChannel(tablesChannel);
+  tablesChannel = sb.channel('tables_status:all')
+    .on('postgres_changes', { event:'*', schema:'public', table:'tables_status' }, payload=>{
+      const row = payload.new || payload.old;
+      if(!row) return;
+      rows.set(keyOf(row.zone,row.table_num), payload.new || row);
+
+      const cell = document.querySelector(`.table[data-zone="${row.zone}"][data-num="${row.table_num}"]`);
+      if(cell){
+        const r = rows.get(keyOf(row.zone,row.table_num));
+        applyStatus(cell, r.status || null);
+        setNote(cell, r.note || '');
+        setNumFlag(cell, !!r.num_marked);
+        if(!(r && r.status && r.status_started)){
+          setTimer(cell, '');
+          prevUrgencyLevel.delete(keyOf(row.zone,row.table_num));
+        }
+      }
+      refreshDerived();
+    })
+    .subscribe();
+}
+
+function subscribeBroadcasts(){
+  if(!sb) return;
+  if(eventsChannel) sb.removeChannel(eventsChannel);
+  eventsChannel = sb.channel('help_events:all')
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'help_events' }, payload=>{
+      const row = payload?.new;
+      const kind = row?.kind;
+      if(!kind) return;
+      if(kind === BROADCAST_CLEAR){ hideBroadcastLocal(); return; }
+      showBroadcastLocal(kind);
+    })
+    .subscribe();
+}
+
+/* Resize */
+let raf=null;
+function scheduleLayout(){
+  if(raf) cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(()=>{
+    raf=null;
+    applyResponsiveGap();
+    layoutToFit();
+  });
+}
+window.addEventListener('resize', scheduleLayout);
+window.addEventListener('orientationchange', ()=>setTimeout(()=>{ applyResponsiveGap(); layoutToFit(); }, 60));
+
+/* Init */
+(async function init(){
+  // 1) Altijd eerst de UI neerzetten (ook zonder netwerk / Supabase)
+  render();
+  applyResponsiveGap();
+  layoutToFit();
+
+  // 2) Daarna data ophalen + realtime (best-effort)
+  try{
+    await fetchAll();
+    render();                // hertekenen met data als die binnen is
+    subscribeRealtimeTables();
+    subscribeBroadcasts();
+    autoDailyResetCheck();
+  }catch(e){
+    console.error('init network phase failed', e);
+  }
+  applyResponsiveGap();
+  layoutToFit();
+})();
+</script>
 </body>
 </html>
