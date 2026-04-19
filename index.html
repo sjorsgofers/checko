@@ -883,6 +883,53 @@
     min-height:1em;
   }
 
+  .form-label{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-top:4px;
+  }
+  .input-wrap textarea{
+    width:100%;
+    min-height:64px;
+    padding:10px 12px;
+    border:1px solid #2f2f2f;
+    border-radius:10px;
+    background:#101010;
+    color:var(--text);
+    font-family:inherit;
+    font-size:14px;
+    resize:vertical;
+  }
+  .time-slots{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(72px, 1fr));
+    gap:6px;
+  }
+  .time-slot{
+    appearance:none;
+    padding:10px 6px;
+    border:1.5px solid #2f2f2f;
+    background:#101010;
+    color:var(--text);
+    border-radius:9px;
+    font-weight:800;
+    font-size:15px;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:-.01em;
+    cursor:pointer;
+    transition:transform .08s, background .15s, border-color .15s, color .15s;
+  }
+  .time-slot:active{ transform:scale(.94); }
+  .time-slot.selected{
+    background:linear-gradient(180deg, var(--gold) 0%, var(--gold-dim) 100%);
+    border-color:var(--gold);
+    color:#0b0b0b;
+    box-shadow:0 2px 10px rgba(200,164,91,.3);
+  }
+
   .res-empty{
     text-align:center;
     color:var(--muted);
@@ -1087,6 +1134,52 @@
       <div class="modal-footer">
         <button class="link" id="changeTableCancel">Annuleren</button>
         <button class="link primary" id="changeTableConfirm">Bevestigen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vrije tafel: kies tussen Passant en Reservering -->
+  <div id="freeActionOverlay" class="overlay" aria-modal="true" role="dialog">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="arrive-title" id="freeActionTitle">Tafel</div>
+        <div class="arrive-sub" id="freeActionSub"></div>
+      </div>
+      <div class="arrive-actions">
+        <button class="choice arrive-btn arrive-complete arrive-size-lg" id="freeAsPassant">
+          <span class="arrive-dot complete"></span>Passant (direct binnen)
+        </button>
+        <button class="choice arrive-btn arrive-change arrive-size-lg" id="freeAsReservation">Nieuwe reservering</button>
+        <button class="choice reset arrive-size-sm" id="freeActionCancel">Annuleren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nieuwe reservering formulier -->
+  <div id="newResOverlay" class="overlay" aria-modal="true" role="dialog">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="arrive-title" id="newResTitle">Nieuwe reservering</div>
+        <div class="arrive-sub" id="newResSub"></div>
+      </div>
+      <div class="input-wrap">
+        <label class="form-label">Naam</label>
+        <input id="newResName" type="text" maxlength="60" placeholder="Naam van gast..." />
+
+        <label class="form-label">Aantal personen</label>
+        <input id="newResParty" type="number" inputmode="numeric" min="1" max="30" placeholder="Bijv. 4" />
+
+        <label class="form-label">Tijd</label>
+        <div class="time-slots" id="newResTimeSlots"></div>
+
+        <label class="form-label">Opmerkingen (optioneel)</label>
+        <textarea id="newResNotes" placeholder="Bijv. verjaardag, allergie..."></textarea>
+
+        <div class="input-error" id="newResError"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="link" id="newResCancel">Annuleren</button>
+        <button class="link primary" id="newResSave">Opslaan</button>
       </div>
     </div>
   </div>
@@ -1308,6 +1401,26 @@ const releaseSubEl = document.getElementById('releaseSub');
 const releaseConfirmEl = document.getElementById('releaseConfirm');
 const releaseCancelEl = document.getElementById('releaseCancel');
 let releasingRes = null;
+
+const freeActionOverlayEl = document.getElementById('freeActionOverlay');
+const freeActionTitleEl = document.getElementById('freeActionTitle');
+const freeActionSubEl = document.getElementById('freeActionSub');
+const freeAsPassantEl = document.getElementById('freeAsPassant');
+const freeAsReservationEl = document.getElementById('freeAsReservation');
+const freeActionCancelEl = document.getElementById('freeActionCancel');
+
+const newResOverlayEl = document.getElementById('newResOverlay');
+const newResTitleEl = document.getElementById('newResTitle');
+const newResSubEl = document.getElementById('newResSub');
+const newResNameEl = document.getElementById('newResName');
+const newResPartyEl = document.getElementById('newResParty');
+const newResTimeSlotsEl = document.getElementById('newResTimeSlots');
+const newResNotesEl = document.getElementById('newResNotes');
+const newResErrorEl = document.getElementById('newResError');
+const newResSaveEl = document.getElementById('newResSave');
+const newResCancelEl = document.getElementById('newResCancel');
+let pendingFreeTable = null;
+let selectedTimeSlot = null;
 
 const changeTableOverlayEl = document.getElementById('changeTableOverlay');
 const changeTableSubEl = document.getElementById('changeTableSub');
@@ -2169,13 +2282,134 @@ function renderFreeTables(){
       <span class="tnum">${t.num}</span>
       <span class="cap-inline">${t.cap ? `(${t.cap})` : ''}</span>
     `;
-    el.addEventListener('click', async ()=>{
-      haptic(15);
-      await createPassant(t.zone, t.num);
+    el.addEventListener('click', ()=>{
+      haptic(10);
+      openFreeActionModal(t);
     });
     freeGroupsEl.appendChild(el);
   }
 }
+
+/* ===== Vrije tafel → Passant of Nieuwe reservering ===== */
+function openFreeActionModal(t){
+  pendingFreeTable = t;
+  freeActionTitleEl.textContent = `Tafel ${t.num}`;
+  freeActionSubEl.textContent = t.cap ? `Max ${t.cap} personen` : '';
+  freeActionOverlayEl.classList.add('open');
+}
+function closeFreeActionModal(){
+  freeActionOverlayEl.classList.remove('open');
+}
+freeActionCancelEl.addEventListener('click', ()=>{ pendingFreeTable = null; closeFreeActionModal(); });
+freeActionOverlayEl.addEventListener('click', (e)=>{
+  if(e.target===freeActionOverlayEl){ pendingFreeTable = null; closeFreeActionModal(); }
+});
+
+freeAsPassantEl.addEventListener('click', async ()=>{
+  if(!pendingFreeTable) return;
+  haptic(15);
+  const t = pendingFreeTable; pendingFreeTable = null;
+  closeFreeActionModal();
+  await createPassant(t.zone, t.num);
+});
+
+freeAsReservationEl.addEventListener('click', ()=>{
+  if(!pendingFreeTable) return;
+  haptic(10);
+  const t = pendingFreeTable; // behouden voor nieuwResModal
+  closeFreeActionModal();
+  openNewResModal(t);
+});
+
+/* ===== Nieuwe reservering formulier ===== */
+function buildTimeSlots(){
+  newResTimeSlotsEl.innerHTML = '';
+  const slots = [];
+  for(let h=16; h<=21; h++){
+    slots.push(`${String(h).padStart(2,'0')}:00`);
+    if(h < 21) slots.push(`${String(h).padStart(2,'0')}:30`);
+  }
+  for(const t of slots){
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'time-slot';
+    btn.textContent = t;
+    btn.dataset.time = t;
+    btn.addEventListener('click', ()=>{
+      selectedTimeSlot = t;
+      newResTimeSlotsEl.querySelectorAll('.time-slot').forEach(b=>{
+        b.classList.toggle('selected', b.dataset.time === t);
+      });
+      haptic(6);
+    });
+    newResTimeSlotsEl.appendChild(btn);
+  }
+}
+buildTimeSlots();
+
+function openNewResModal(t){
+  pendingFreeTable = t;
+  newResTitleEl.textContent = `Nieuwe reservering — Tafel ${t.num}`;
+  newResSubEl.textContent = t.cap ? `Max ${t.cap} personen` : '';
+  newResNameEl.value = '';
+  newResPartyEl.value = '';
+  newResPartyEl.placeholder = t.cap ? `Max ${t.cap}` : 'Bijv. 4';
+  newResNotesEl.value = '';
+  newResErrorEl.textContent = '';
+  selectedTimeSlot = null;
+  newResTimeSlotsEl.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
+  newResOverlayEl.classList.add('open');
+  setTimeout(()=>newResNameEl.focus(), 60);
+}
+function closeNewResModal(){
+  newResOverlayEl.classList.remove('open');
+  pendingFreeTable = null;
+}
+newResCancelEl.addEventListener('click', closeNewResModal);
+newResOverlayEl.addEventListener('click', (e)=>{ if(e.target===newResOverlayEl) closeNewResModal(); });
+
+newResSaveEl.addEventListener('click', async ()=>{
+  if(!pendingFreeTable){ closeNewResModal(); return; }
+  const name = newResNameEl.value.trim();
+  const party = parseInt(newResPartyEl.value, 10);
+  const notes = newResNotesEl.value.trim() || null;
+
+  if(!name){ newResErrorEl.textContent = 'Geef een naam op.'; newResNameEl.focus(); return; }
+  if(!selectedTimeSlot){ newResErrorEl.textContent = 'Kies een tijdstip.'; return; }
+
+  haptic(15);
+  const t = pendingFreeTable;
+  const payload = {
+    res_date:  currentResDate,
+    res_time:  selectedTimeSlot + ':00',
+    name,
+    party_size: Number.isFinite(party) && party > 0 ? party : null,
+    table_nums: [t.num],
+    zone:       t.zone,
+    notes,
+    arrived:    false,
+    arrived_at: null,
+    source:     'walkin-res'
+  };
+
+  if(sb){
+    try{
+      const { data, error } = await sb.from('reservations').insert(payload).select().single();
+      if(error){ console.error('newRes insert', error); newResErrorEl.textContent = 'Opslaan mislukt.'; return; }
+      if(data) reservations.push(data);
+    }catch(e){
+      console.error('newRes ex', e);
+      newResErrorEl.textContent = 'Opslaan mislukt.';
+      return;
+    }
+  } else {
+    reservations.push({ id: 'local-'+Date.now(), ...payload });
+  }
+
+  closeNewResModal();
+  refreshDerived();
+  renderReservationsView();
+});
 
 async function createPassant(zone, num){
   const now = new Date().toISOString();
