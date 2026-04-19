@@ -647,12 +647,12 @@
     appearance:none;
     display:inline-flex;
     align-items:baseline;
-    gap:4px;
-    padding:6px 9px;
-    border:1.5px solid rgba(16,185,129,.45);
-    background:linear-gradient(180deg, rgba(16,185,129,.14) 0%, rgba(16,185,129,.04) 100%);
+    gap:5px;
+    padding:10px 14px;
+    border:1.5px solid rgba(16,185,129,.5);
+    background:linear-gradient(180deg, rgba(16,185,129,.16) 0%, rgba(16,185,129,.04) 100%);
     color:#fff;
-    border-radius:9px;
+    border-radius:11px;
     cursor:pointer;
     transition:transform .08s;
     line-height:1;
@@ -661,12 +661,12 @@
   .free-tile:active{ transform:scale(.92); }
   .free-tile .tnum{
     font-weight:900;
-    font-size:clamp(14px, 2vw, 16px);
+    font-size:clamp(17px, 2.4vw, 20px);
     letter-spacing:-.02em;
   }
   .free-tile .cap-inline{
     font-weight:700;
-    font-size:clamp(11px, 1.5vw, 12px);
+    font-size:clamp(12px, 1.7vw, 14px);
     color:#34d399;
     opacity:.9;
   }
@@ -709,10 +709,11 @@
     padding:2px;
   }
   .res-row{
-    display:grid;
-    grid-template-columns:auto 1fr;
-    gap:12px;
-    padding:8px 12px;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:baseline;
+    gap:4px 12px;
+    padding:10px 14px;
     background:linear-gradient(180deg, #171717 0%, #0f0f0f 100%);
     border:1px solid #262626;
     border-radius:12px;
@@ -723,7 +724,6 @@
     color:inherit;
     font:inherit;
     width:100%;
-    align-items:center;
   }
   .res-row:active{ transform:scale(.995); }
 
@@ -737,52 +737,12 @@
     opacity:.95;
   }
 
-  /* Tafelnummer-badge links (compacter) */
-  .res-table-badge{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    min-width:72px;
-    padding:6px 8px;
-    border-radius:10px;
-    background:linear-gradient(160deg, rgba(200,164,91,.22) 0%, rgba(200,164,91,.08) 100%);
-    border:1.5px solid rgba(200,164,91,.55);
-    color:var(--gold);
-    line-height:1;
-    gap:2px;
-  }
-  .res-table-badge .rtb-tnum{
-    font-weight:900;
-    font-size:clamp(18px, 3vw, 24px);
-    letter-spacing:-.02em;
-    font-variant-numeric:tabular-nums;
-    color:#fff;
-    line-height:1;
-  }
-  .res-table-badge .rtb-lbl{
-    font-size:9px;
+  .res-tables-text{
     font-weight:800;
-    letter-spacing:.12em;
-    color:var(--gold);
-    opacity:.85;
-  }
-
-  .res-row.partial .res-table-badge{
-    background:linear-gradient(160deg, rgba(245,158,11,.30) 0%, rgba(245,158,11,.10) 100%);
-    border-color:rgba(245,158,11,.7);
-  }
-  .res-row.arrived .res-table-badge{
-    background:linear-gradient(160deg, rgba(16,185,129,.30) 0%, rgba(16,185,129,.10) 100%);
-    border-color:rgba(16,185,129,.6);
-  }
-
-  .res-body{
-    display:flex;
-    flex-wrap:wrap;
-    align-items:baseline;
-    gap:4px 10px;
-    min-width:0;
+    font-size:clamp(14px, 2.2vw, 17px);
+    color:#fff;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:-.01em;
   }
   .res-time{
     font-weight:900;
@@ -1708,16 +1668,11 @@ function makeResRow(r){
                  : '';
 
   row.innerHTML = `
-    <div class="res-table-badge">
-      <span class="rtb-tnum">${escapeHtml(tablesTxt)}</span>
-      <span class="rtb-lbl">TAFEL</span>
-    </div>
-    <div class="res-body">
-      <span class="res-time">${timeTxt}</span>
-      <span class="res-name">${escapeHtml(r.name || '(onbekend)')}${stateChip}</span>
-      ${partyHtml}
-      ${r.notes ? `<span class="res-note-inline">${escapeHtml(r.notes)}</span>` : ''}
-    </div>
+    <span class="res-time">${timeTxt}</span>
+    <span class="res-name">${escapeHtml(r.name || '(onbekend)')}${stateChip}</span>
+    <span class="res-tables-text">T ${escapeHtml(tablesTxt)}</span>
+    ${partyHtml}
+    ${r.notes ? `<span class="res-note-inline">${escapeHtml(r.notes)}</span>` : ''}
   `;
 
   row.addEventListener('click', ()=>{
@@ -1809,51 +1764,25 @@ function renderFreeTables(){
   }
   freeSubEl.textContent = `${free.length} tafels`;
 
-  // Groeperen op capaciteit
-  const byCap = new Map();
+  // Sorteren op tafelnummer (oplopend)
+  free.sort((a,b)=> a.num - b.num);
+
   for(const t of free){
-    const key = t.cap || 0;
-    if(!byCap.has(key)) byCap.set(key, []);
-    byCap.get(key).push(t);
-  }
-  // Capaciteiten oplopend, onbekende (0) onderaan
-  const caps = [...byCap.keys()].sort((a,b)=>{
-    if(a === 0) return 1;
-    if(b === 0) return -1;
-    return a - b;
-  });
-
-  for(const cap of caps){
-    const tiles = byCap.get(cap).sort((a,b)=> a.num - b.num);
-
-    const row = document.createElement('div');
-    row.className = 'fg-row';
-
-    const lbl = document.createElement('div');
-    lbl.className = 'fg-label';
-    lbl.textContent = cap ? `${cap}p` : '?';
-
-    const wrap = document.createElement('div');
-    wrap.className = 'fg-tiles';
-
-    for(const t of tiles){
-      const el = document.createElement('button');
-      el.type = 'button';
-      el.className = 'free-tile';
-      el.textContent = t.num;
-      el.addEventListener('click', async ()=>{
-        haptic(15);
-        await upsertTable(t.zone, t.num, { status:'nieuw', status_started:new Date().toISOString(), num_marked:true });
-        const cell = document.querySelector(`.table[data-zone="${t.zone}"][data-num="${t.num}"]`);
-        if(cell){ applyStatus(cell, 'nieuw'); setNumFlag(cell, true); }
-        refreshDerived();
-      });
-      wrap.appendChild(el);
-    }
-
-    row.appendChild(lbl);
-    row.appendChild(wrap);
-    freeGroupsEl.appendChild(row);
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'free-tile';
+    el.innerHTML = `
+      <span class="tnum">${t.num}</span>
+      <span class="cap-inline">${t.cap ? `(${t.cap})` : ''}</span>
+    `;
+    el.addEventListener('click', async ()=>{
+      haptic(15);
+      await upsertTable(t.zone, t.num, { status:'nieuw', status_started:new Date().toISOString(), num_marked:true });
+      const cell = document.querySelector(`.table[data-zone="${t.zone}"][data-num="${t.num}"]`);
+      if(cell){ applyStatus(cell, 'nieuw'); setNumFlag(cell, true); }
+      refreshDerived();
+    });
+    freeGroupsEl.appendChild(el);
   }
 }
 
