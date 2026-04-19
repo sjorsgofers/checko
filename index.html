@@ -2283,11 +2283,22 @@ async function applyTableChange(res, newNums){
 
 function renderFreeTables(){
   freeGroupsEl.innerHTML = '';
+
+  // Alle tafels die door een reservering (pending/partial/complete) vandaag geclaimd worden
+  const reservedNums = new Set();
+  for(const r of reservations){
+    for(const n of (r.table_nums||[])) reservedNums.add(n);
+  }
+
   const free = [];
   for(const g of GROUPS){
     for(const n of expandRanges(g.ranges)){
       const r = rows.get(keyOf(g.zone, n));
-      if(!r || !r.status) free.push({zone:g.zone, num:n, cap: TABLE_CAPACITIES[n] || 0});
+      const occupied = r && r.status;
+      const reserved = reservedNums.has(n);
+      if(!occupied && !reserved){
+        free.push({zone:g.zone, num:n, cap: TABLE_CAPACITIES[n] || 0});
+      }
     }
   }
   freeSubEl.textContent = `${free.length} tafels`;
