@@ -862,6 +862,19 @@
   .arrive-partial{ border-color:rgba(245,158,11,.55) !important; }
   .arrive-complete{ border-color:rgba(16,185,129,.55) !important; }
   .arrive-change{ border-color:rgba(14,165,233,.55) !important; color:#38bdf8; }
+  .arrive-release{
+    border-color:rgba(239,68,68,.55) !important;
+    color:#f87171;
+    background:linear-gradient(180deg, rgba(239,68,68,.06) 0%, rgba(239,68,68,.02) 100%);
+  }
+  .arrive-release-confirm{
+    background:linear-gradient(180deg, var(--nieuw) 0%, var(--nieuw-2) 100%) !important;
+    border:1.5px solid var(--nieuw) !important;
+    color:#fff !important;
+    font-weight:900;
+    letter-spacing:.02em;
+    box-shadow:0 2px 12px rgba(239,68,68,.3);
+  }
 
   .input-error{
     font-size:13px;
@@ -1051,6 +1064,7 @@
         </button>
         <button class="choice arrive-btn arrive-change arrive-size-sm" id="arriveChange">Tafel aanpassen</button>
         <button class="choice reset arrive-size-sm" id="arriveUndo">Ongedaan maken</button>
+        <button class="choice arrive-release arrive-size-sm" id="arriveRelease">Tafel vrijgeven</button>
       </div>
       <div class="modal-footer">
         <button class="link" id="arriveClose">Sluiten</button>
@@ -1073,6 +1087,20 @@
       <div class="modal-footer">
         <button class="link" id="changeTableCancel">Annuleren</button>
         <button class="link primary" id="changeTableConfirm">Bevestigen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tafel vrijgeven bevestiging -->
+  <div id="releaseOverlay" class="overlay" aria-modal="true" role="dialog">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="arrive-title">Tafel vrijgeven?</div>
+        <div class="arrive-sub" id="releaseSub"></div>
+      </div>
+      <div class="arrive-actions">
+        <button class="choice arrive-release-confirm arrive-size-lg" id="releaseConfirm">Ja, vrijgeven</button>
+        <button class="choice reset arrive-size-sm" id="releaseCancel">Annuleren</button>
       </div>
     </div>
   </div>
@@ -1272,7 +1300,14 @@ const arrivePartialEl = document.getElementById('arrivePartial');
 const arriveCompleteEl = document.getElementById('arriveComplete');
 const arriveChangeEl = document.getElementById('arriveChange');
 const arriveUndoEl = document.getElementById('arriveUndo');
+const arriveReleaseEl = document.getElementById('arriveRelease');
 const arriveCloseEl = document.getElementById('arriveClose');
+
+const releaseOverlayEl = document.getElementById('releaseOverlay');
+const releaseSubEl = document.getElementById('releaseSub');
+const releaseConfirmEl = document.getElementById('releaseConfirm');
+const releaseCancelEl = document.getElementById('releaseCancel');
+let releasingRes = null;
 
 const changeTableOverlayEl = document.getElementById('changeTableOverlay');
 const changeTableSubEl = document.getElementById('changeTableSub');
@@ -1857,6 +1892,55 @@ arriveChangeEl.addEventListener('click', ()=>{
   const r = arrivingRes; closeArriveModal();
   openChangeTableModal(r);
 });
+
+/* ===== Tafel vrijgeven (met bevestiging) ===== */
+arriveReleaseEl.addEventListener('click', ()=>{
+  if(!arrivingRes) return;
+  haptic(15);
+  const r = arrivingRes; closeArriveModal();
+  openReleaseModal(r);
+});
+
+function openReleaseModal(r){
+  releasingRes = r;
+  const tablesTxt = (r.table_nums||[]).join(', ');
+  releaseSubEl.textContent = `${r.name || '(onbekend)'} — Tafel ${tablesTxt}. Deze reservering verdwijnt en de tafel komt bij de vrije tafels.`;
+  releaseOverlayEl.classList.add('open');
+}
+function closeReleaseModal(){
+  releaseOverlayEl.classList.remove('open');
+  releasingRes = null;
+}
+releaseCancelEl.addEventListener('click', closeReleaseModal);
+releaseOverlayEl.addEventListener('click', (e)=>{ if(e.target===releaseOverlayEl) closeReleaseModal(); });
+
+releaseConfirmEl.addEventListener('click', async ()=>{
+  if(!releasingRes) return;
+  haptic(25);
+  const r = releasingRes; closeReleaseModal();
+  await releaseReservation(r);
+});
+
+async function releaseReservation(res){
+  // 1) Tafels vrijgeven
+  for(const n of (res.table_nums||[])){
+    const z = inferZone(n) || res.zone;
+    if(!z) continue;
+    await upsertTable(z, n, { status:null, status_started:null, num_marked:false });
+    const cell = document.querySelector(`.table[data-zone="${z}"][data-num="${n}"]`);
+    if(cell){ applyStatus(cell, null); setNumFlag(cell, false); setTimer(cell, ''); }
+  }
+  // 2) Reservering verwijderen
+  if(sb){
+    try{
+      const { error } = await sb.from('reservations').delete().eq('id', res.id);
+      if(error) console.error('release delete', error);
+    }catch(e){ console.error('release ex', e); }
+  }
+  reservations = reservations.filter(r => r.id !== res.id);
+  refreshDerived();
+  renderReservationsView();
+}
 
 function openChangeTableModal(res){
   changingRes = res;
