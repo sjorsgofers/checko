@@ -850,6 +850,49 @@
     border:1px solid rgba(16,185,129,.5);
   }
 
+  /* Te laat */
+  .res-row.late{
+    border-color:rgba(239,68,68,.7);
+    background:linear-gradient(180deg, rgba(239,68,68,.14) 0%, rgba(239,68,68,.03) 100%);
+    animation: lateFlash 2.4s ease-in-out infinite;
+  }
+  @keyframes lateFlash{
+    0%,100% { filter:brightness(1); }
+    50%     { filter:brightness(1.15); }
+  }
+  .res-late-chip{
+    display:inline-block;
+    padding:3px 10px;
+    border-radius:999px;
+    background:var(--nieuw);
+    color:#fff;
+    font-weight:900;
+    font-size:clamp(11px, 1.6vw, 12px);
+    letter-spacing:.12em;
+    text-transform:uppercase;
+  }
+  .res-phone-link{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:4px 10px;
+    border-radius:8px;
+    background:rgba(239,68,68,.18);
+    border:1px solid rgba(239,68,68,.45);
+    color:#fff;
+    font-weight:800;
+    font-size:clamp(12px, 1.8vw, 14px);
+    font-variant-numeric:tabular-nums;
+    text-decoration:none;
+    letter-spacing:-.01em;
+    cursor:pointer;
+  }
+  .res-phone-link::before{
+    content:"☎";
+    font-size:.95em;
+    opacity:.9;
+  }
+
   /* Arrive modal */
   .arrive-title{ font-size:18px; font-weight:900; color:#fff; }
   .arrive-sub{ font-size:13px; color:var(--muted); font-weight:700; margin-top:3px; }
@@ -1864,6 +1907,19 @@ function getArrivalState(r){
   return 'pending';
 }
 
+const LATE_THRESHOLD_MS = 20 * 60 * 1000;
+function isLate(r){
+  if(getArrivalState(r) !== 'pending') return false;
+  if(!r.res_time || !r.res_date) return false;
+  const [h, m] = r.res_time.slice(0,5).split(':').map(Number);
+  const [y, mo, d] = r.res_date.split('-').map(Number);
+  const scheduled = new Date(y, mo-1, d, h, m).getTime();
+  return (Date.now() - scheduled) > LATE_THRESHOLD_MS;
+}
+function telHref(phone){
+  return 'tel:' + (phone||'').replace(/[^\d+]/g,'');
+}
+
 async function setArrivalState(res, state){
   const now = new Date().toISOString();
   const prev = getArrivalState(res);
@@ -1924,9 +1980,14 @@ function renderReservationsDerived(){
 
 function makeResRow(r){
   const state = getArrivalState(r);
+  const late  = isLate(r);
   const row = document.createElement('button');
   row.type = 'button';
-  row.className = 'res-row' + (state === 'complete' ? ' arrived' : state === 'partial' ? ' partial' : '');
+  let cls = 'res-row';
+  if(state === 'complete') cls += ' arrived';
+  else if(state === 'partial') cls += ' partial';
+  if(late) cls += ' late';
+  row.className = cls;
   row.dataset.id = r.id;
 
   const timeTxt  = r.res_time ? r.res_time.slice(0,5) : '—';
@@ -1935,14 +1996,26 @@ function makeResRow(r){
   const stateChip = state === 'partial'  ? `<span class="res-state-chip partial">Deels</span>`
                  : state === 'complete' ? `<span class="res-state-chip complete">Binnen</span>`
                  : '';
+  const lateChip  = late ? `<span class="res-late-chip">Te laat</span>` : '';
+  const phoneHtml = (late && r.phone)
+    ? `<a class="res-phone-link" href="${telHref(r.phone)}" data-phone="1">${escapeHtml(r.phone)}</a>`
+    : '';
 
   row.innerHTML = `
     <span class="res-time">${timeTxt}</span>
     <span class="res-name">${escapeHtml(r.name || '(onbekend)')}${stateChip}</span>
+    ${lateChip}
+    ${phoneHtml}
     <span class="res-tables-text">T ${escapeHtml(tablesTxt)}</span>
     ${partyHtml}
     ${r.notes ? `<span class="res-note-inline">${escapeHtml(r.notes)}</span>` : ''}
   `;
+
+  // Klik op telefoonlink mag niet de arrive-modal openen
+  const phoneEl = row.querySelector('[data-phone="1"]');
+  if(phoneEl){
+    phoneEl.addEventListener('click', (e)=> e.stopPropagation());
+  }
 
   row.addEventListener('click', ()=>{
     haptic(10);
@@ -1950,6 +2023,21 @@ function makeResRow(r){
   });
   return row;
 }
+
+/* Check elke 30s of er reserveringen "te laat" geworden zijn; alleen gewijzigde rijen vervangen */
+setInterval(()=>{
+  if(currentView !== 'reservations') return;
+  resListEl.querySelectorAll('.res-row').forEach(row=>{
+    const id = row.dataset.id;
+    const r = reservations.find(x => String(x.id) === String(id));
+    if(!r) return;
+    const isNowLate  = isLate(r);
+    const wasLate    = row.classList.contains('late');
+    if(isNowLate !== wasLate){
+      row.replaceWith(makeResRow(r));
+    }
+  });
+}, 30_000);
 
 function renderResList(){
   resListEl.innerHTML = '';
