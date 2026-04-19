@@ -830,10 +830,29 @@
   /* Arrive modal */
   .arrive-title{ font-size:18px; font-weight:900; color:#fff; }
   .arrive-sub{ font-size:13px; color:var(--muted); font-weight:700; margin-top:3px; }
-  .arrive-btn{
-    font-size:16px;
-    padding:16px;
+  .arrive-actions{
+    padding:14px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
   }
+  .arrive-size-xl{
+    font-size:clamp(18px, 2.4vw, 22px);
+    padding:22px 16px;
+    font-weight:900;
+    letter-spacing:.02em;
+  }
+  .arrive-size-lg{
+    font-size:clamp(15px, 2vw, 17px);
+    padding:16px;
+    font-weight:800;
+  }
+  .arrive-size-sm{
+    font-size:clamp(13px, 1.8vw, 14px);
+    padding:11px 14px;
+    font-weight:700;
+  }
+  .arrive-btn{ font-size:16px; padding:16px; }
   .arrive-dot{
     width:14px; height:14px; border-radius:50%;
     box-shadow:0 0 10px currentColor;
@@ -1023,15 +1042,15 @@
         <div class="arrive-title" id="arriveTitle">—</div>
         <div class="arrive-sub" id="arriveSub"></div>
       </div>
-      <div class="modal-grid">
-        <button class="choice arrive-btn arrive-partial" id="arrivePartial">
-          <span class="arrive-dot partial"></span>Deels binnen
-        </button>
-        <button class="choice arrive-btn arrive-complete" id="arriveComplete">
+      <div class="arrive-actions">
+        <button class="choice arrive-btn arrive-complete arrive-size-xl" id="arriveComplete">
           <span class="arrive-dot complete"></span>Compleet binnen
         </button>
-        <button class="choice arrive-btn arrive-change" id="arriveChange">Tafel aanpassen</button>
-        <button class="choice reset" id="arriveUndo">Ongedaan maken</button>
+        <button class="choice arrive-btn arrive-partial arrive-size-lg" id="arrivePartial">
+          <span class="arrive-dot partial"></span>Deels binnen
+        </button>
+        <button class="choice arrive-btn arrive-change arrive-size-sm" id="arriveChange">Tafel aanpassen</button>
+        <button class="choice reset arrive-size-sm" id="arriveUndo">Ongedaan maken</button>
       </div>
       <div class="modal-footer">
         <button class="link" id="arriveClose">Sluiten</button>
