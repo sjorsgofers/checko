@@ -604,7 +604,12 @@
     flex:0 0 auto;
     min-height:0;
   }
-  .res-section.res-main{ flex:1 1 auto; min-height:0; }
+  .res-section.res-main{
+    flex:1 1 auto;
+    min-height:0;
+    overflow:hidden;
+  }
+  .res-section.res-free{ flex:0 0 auto; }
 
   .res-section-head{
     display:flex;
@@ -628,56 +633,41 @@
     font-weight:700;
   }
 
-  /* Vrije tafels grid */
-  .free-tables{
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(58px, 1fr));
-    gap:6px;
-    padding:2px;
-    max-height:28vh;
+  /* Vrije tafels — compact: alle nummers met capaciteit erachter */
+  .free-groups{
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+    max-height:22vh;
     overflow-y:auto;
+    padding:2px 2px 4px;
+    align-content:flex-start;
   }
   .free-tile{
     appearance:none;
+    display:inline-flex;
+    align-items:baseline;
+    gap:4px;
+    padding:6px 9px;
     border:1.5px solid rgba(16,185,129,.45);
-    background:linear-gradient(180deg, rgba(16,185,129,.12) 0%, rgba(16,185,129,.04) 100%);
-    color:#34d399;
-    border-radius:10px;
-    padding:10px 6px 8px;
+    background:linear-gradient(180deg, rgba(16,185,129,.14) 0%, rgba(16,185,129,.04) 100%);
+    color:#fff;
+    border-radius:9px;
     cursor:pointer;
-    letter-spacing:-.02em;
     transition:transform .08s;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:2px;
-    position:relative;
+    line-height:1;
+    font-variant-numeric:tabular-nums;
   }
-  .free-tile:active{ transform:scale(.94); }
+  .free-tile:active{ transform:scale(.92); }
   .free-tile .tnum{
     font-weight:900;
-    font-size:clamp(18px, 3vw, 24px);
-    font-variant-numeric:tabular-nums;
-    line-height:1;
-    color:#fff;
+    font-size:clamp(14px, 2vw, 16px);
+    letter-spacing:-.02em;
   }
-  .free-tile .cap{
-    display:inline-flex;
-    align-items:center;
-    gap:3px;
-    font-size:clamp(11px, 1.7vw, 13px);
-    font-weight:800;
+  .free-tile .cap-inline{
+    font-weight:700;
+    font-size:clamp(11px, 1.5vw, 12px);
     color:#34d399;
-    font-variant-numeric:tabular-nums;
-    letter-spacing:0;
-    opacity:.95;
-  }
-  .free-tile .cap::before{
-    content:"";
-    width:12px; height:12px;
-    background:currentColor;
-    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M12 12a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0v1H5v-1z'/></svg>") center/contain no-repeat;
-            mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M12 12a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0v1H5v-1z'/></svg>") center/contain no-repeat;
     opacity:.9;
   }
 
@@ -715,91 +705,164 @@
     overflow-y:auto;
     display:flex;
     flex-direction:column;
-    gap:6px;
+    gap:7px;
     padding:2px;
   }
   .res-row{
     display:grid;
-    grid-template-columns:64px 1fr auto;
-    align-items:center;
-    gap:10px;
-    padding:10px 12px;
-    background:linear-gradient(180deg, #161616 0%, #0f0f0f 100%);
+    grid-template-columns:auto 1fr;
+    gap:12px;
+    padding:8px 12px;
+    background:linear-gradient(180deg, #171717 0%, #0f0f0f 100%);
     border:1px solid #262626;
     border-radius:12px;
     transition:all .2s;
+    cursor:pointer;
+    text-align:left;
+    appearance:none;
+    color:inherit;
+    font:inherit;
+    width:100%;
+    align-items:center;
+  }
+  .res-row:active{ transform:scale(.995); }
+
+  .res-row.partial{
+    border-color:rgba(245,158,11,.55);
+    background:linear-gradient(180deg, rgba(245,158,11,.10) 0%, rgba(245,158,11,.02) 100%);
   }
   .res-row.arrived{
-    background:linear-gradient(180deg, rgba(16,185,129,.10) 0%, rgba(16,185,129,.02) 100%);
     border-color:rgba(16,185,129,.45);
-    opacity:.92;
+    background:linear-gradient(180deg, rgba(16,185,129,.10) 0%, rgba(16,185,129,.02) 100%);
+    opacity:.95;
   }
-  .res-row.arrived .res-time{ color:#34d399; }
 
+  /* Tafelnummer-badge links (compacter) */
+  .res-table-badge{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    min-width:72px;
+    padding:6px 8px;
+    border-radius:10px;
+    background:linear-gradient(160deg, rgba(200,164,91,.22) 0%, rgba(200,164,91,.08) 100%);
+    border:1.5px solid rgba(200,164,91,.55);
+    color:var(--gold);
+    line-height:1;
+    gap:2px;
+  }
+  .res-table-badge .rtb-tnum{
+    font-weight:900;
+    font-size:clamp(18px, 3vw, 24px);
+    letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums;
+    color:#fff;
+    line-height:1;
+  }
+  .res-table-badge .rtb-lbl{
+    font-size:9px;
+    font-weight:800;
+    letter-spacing:.12em;
+    color:var(--gold);
+    opacity:.85;
+  }
+
+  .res-row.partial .res-table-badge{
+    background:linear-gradient(160deg, rgba(245,158,11,.30) 0%, rgba(245,158,11,.10) 100%);
+    border-color:rgba(245,158,11,.7);
+  }
+  .res-row.arrived .res-table-badge{
+    background:linear-gradient(160deg, rgba(16,185,129,.30) 0%, rgba(16,185,129,.10) 100%);
+    border-color:rgba(16,185,129,.6);
+  }
+
+  .res-body{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:baseline;
+    gap:4px 10px;
+    min-width:0;
+  }
   .res-time{
     font-weight:900;
-    font-size:clamp(16px, 2.6vw, 20px);
+    font-size:clamp(15px, 2.5vw, 19px);
     color:#fff;
     font-variant-numeric:tabular-nums;
     letter-spacing:-.02em;
   }
-  .res-body{
-    display:flex;
-    flex-direction:column;
-    gap:2px;
-    min-width:0;
-  }
   .res-name{
     font-weight:800;
-    font-size:clamp(14px, 2.2vw, 16px);
+    font-size:clamp(15px, 2.3vw, 18px);
     color:#fff;
-    white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
+    white-space:nowrap;
+    max-width:100%;
   }
-  .res-meta{
-    font-size:clamp(11px, 1.7vw, 13px);
-    color:var(--muted);
-    font-weight:600;
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-  }
-  .res-meta .res-tables{
-    color:var(--gold);
-    font-weight:800;
-  }
-  .res-note-bubble{
-    display:inline-block;
-    padding:1px 7px;
+  .res-party{
+    display:inline-flex;
+    align-items:center;
+    padding:2px 8px;
     border-radius:999px;
+    background:rgba(200,164,91,.14);
+    border:1px solid rgba(200,164,91,.35);
+    color:var(--gold);
+    font-weight:900;
+    font-size:clamp(11px, 1.7vw, 13px);
+    font-variant-numeric:tabular-nums;
+  }
+  .res-note-inline{
+    display:inline-block;
+    padding:2px 9px;
+    border-radius:8px;
     background:rgba(245,158,11,.15);
+    border:1px solid rgba(245,158,11,.35);
     color:#fbbf24;
-    font-size:11px;
+    font-size:clamp(11px, 1.7vw, 13px);
     font-weight:700;
-    margin-top:2px;
+    line-height:1.3;
+    max-width:100%;
+    white-space:normal;
+    word-break:break-word;
+  }
+  .res-state-chip{
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:999px;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    margin-left:6px;
+    vertical-align:middle;
+  }
+  .res-state-chip.partial{
+    background:rgba(245,158,11,.25);
+    color:#fbbf24;
+    border:1px solid rgba(245,158,11,.5);
+  }
+  .res-state-chip.complete{
+    background:rgba(16,185,129,.25);
+    color:#34d399;
+    border:1px solid rgba(16,185,129,.5);
   }
 
-  .res-arrive{
-    appearance:none;
-    border:1.5px solid var(--gold);
-    background:linear-gradient(180deg, rgba(200,164,91,.12) 0%, rgba(200,164,91,.02) 100%);
-    color:var(--gold);
-    border-radius:10px;
-    padding:10px 14px;
-    font-weight:900;
-    font-size:clamp(13px, 2vw, 15px);
-    cursor:pointer;
-    letter-spacing:.02em;
-    white-space:nowrap;
-    transition:transform .08s;
+  /* Arrive modal */
+  .arrive-title{ font-size:18px; font-weight:900; color:#fff; }
+  .arrive-sub{ font-size:13px; color:var(--muted); font-weight:700; margin-top:3px; }
+  .arrive-btn{
+    font-size:16px;
+    padding:16px;
   }
-  .res-arrive:active{ transform:scale(.95); }
-  .res-row.arrived .res-arrive{
-    background:linear-gradient(180deg, var(--run) 0%, var(--run-2) 100%);
-    border-color:var(--run);
-    color:#fff;
+  .arrive-dot{
+    width:14px; height:14px; border-radius:50%;
+    box-shadow:0 0 10px currentColor;
   }
+  .arrive-dot.partial{ background:var(--drank); color:var(--drank); }
+  .arrive-dot.complete{ background:var(--run); color:var(--run); }
+  .arrive-partial{ border-color:rgba(245,158,11,.55) !important; }
+  .arrive-complete{ border-color:rgba(16,185,129,.55) !important; }
 
   .res-empty{
     text-align:center;
@@ -952,20 +1015,42 @@
       <div class="res-list" id="resList"></div>
     </div>
 
-    <div class="res-section">
-      <div class="res-section-head">
-        <span class="res-section-title">Vrije tafels</span>
-        <span class="res-section-sub" id="freeSub">—</span>
-      </div>
-      <div class="free-tables" id="freeTables"></div>
-    </div>
-
     <button class="arrived-toggle" id="arrivedToggle" type="button" aria-expanded="false">
       <span id="arrivedToggleLbl">Al binnen: 0</span>
       <span class="arrived-chev">▾</span>
     </button>
     <div class="arrived-panel" id="arrivedPanel" hidden></div>
+
+    <div class="res-section res-free">
+      <div class="res-section-head">
+        <span class="res-section-title">Vrije tafels</span>
+        <span class="res-section-sub" id="freeSub">—</span>
+      </div>
+      <div class="free-groups" id="freeGroups"></div>
+    </div>
   </section>
+
+  <!-- Arrive modal: Deels / Compleet / Ongedaan -->
+  <div id="arriveOverlay" class="overlay" aria-modal="true" role="dialog">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="arrive-title" id="arriveTitle">—</div>
+        <div class="arrive-sub" id="arriveSub"></div>
+      </div>
+      <div class="modal-grid">
+        <button class="choice arrive-btn arrive-partial" id="arrivePartial">
+          <span class="arrive-dot partial"></span>Deels binnen
+        </button>
+        <button class="choice arrive-btn arrive-complete" id="arriveComplete">
+          <span class="arrive-dot complete"></span>Compleet binnen
+        </button>
+        <button class="choice reset" id="arriveUndo">Ongedaan maken</button>
+      </div>
+      <div class="modal-footer">
+        <button class="link" id="arriveClose">Sluiten</button>
+      </div>
+    </div>
+  </div>
 
 </main>
 
@@ -1132,13 +1217,22 @@ const resDateNextEl = document.getElementById('resDateNext');
 const resDateTodayEl = document.getElementById('resDateToday');
 const resDateDisplayEl = document.getElementById('resDateDisplay');
 const resRefreshEl = document.getElementById('resRefresh');
-const freeTablesEl = document.getElementById('freeTables');
+const freeGroupsEl = document.getElementById('freeGroups');
 const resListEl = document.getElementById('resList');
 const freeSubEl = document.getElementById('freeSub');
 const resListSubEl = document.getElementById('resListSub');
 const arrivedToggleEl = document.getElementById('arrivedToggle');
 const arrivedToggleLblEl = document.getElementById('arrivedToggleLbl');
 const arrivedPanelEl = document.getElementById('arrivedPanel');
+
+const arriveOverlayEl = document.getElementById('arriveOverlay');
+const arriveTitleEl = document.getElementById('arriveTitle');
+const arriveSubEl = document.getElementById('arriveSub');
+const arrivePartialEl = document.getElementById('arrivePartial');
+const arriveCompleteEl = document.getElementById('arriveComplete');
+const arriveUndoEl = document.getElementById('arriveUndo');
+const arriveCloseEl = document.getElementById('arriveClose');
+let arrivingRes = null;
 
 /* Max-bezetting per tafel (uit tafels_zusje_roermond.json) */
 const TABLE_CAPACITIES = {
@@ -1535,36 +1629,48 @@ async function fetchReservations(dateStr){
   }catch(e){ console.error('fetchReservations ex', e); }
 }
 
-async function setReservationArrived(res, arrived){
-  if(!sb){
-    res.arrived = arrived;
-    res.arrived_at = arrived ? new Date().toISOString() : null;
-  } else {
+function getArrivalState(r){
+  if(r.arrived) return 'complete';
+  if(r.arrived_at) return 'partial';
+  return 'pending';
+}
+
+async function setArrivalState(res, state){
+  const now = new Date().toISOString();
+  const prev = getArrivalState(res);
+  const patch = state === 'complete' ? { arrived:true,  arrived_at:now }
+             : state === 'partial'  ? { arrived:false, arrived_at:now }
+             :                         { arrived:false, arrived_at:null };
+
+  if(sb){
     try{
-      const patch = { arrived, arrived_at: arrived ? new Date().toISOString() : null, updated_at: new Date().toISOString() };
-      const { error } = await sb.from('reservations').update(patch).eq('id', res.id);
-      if(error){ console.error('arrive update', error); return; }
-      res.arrived = arrived;
-      res.arrived_at = patch.arrived_at;
-    }catch(e){ console.error('arrive ex', e); return; }
+      const { error } = await sb.from('reservations').update({ ...patch, updated_at: now }).eq('id', res.id);
+      if(error){ console.error('arrival update', error); return; }
+    }catch(e){ console.error('arrival ex', e); return; }
   }
-  // Sync naar tafels
-  const zone = res.zone || inferZone((res.table_nums||[])[0]);
-  for(const n of (res.table_nums||[])){
-    const z = inferZone(n) || zone;
-    if(!z) continue;
-    if(arrived){
-      await upsertTable(z, n, { status:'nieuw', status_started:new Date().toISOString(), num_marked:true });
-    } else {
-      await upsertTable(z, n, { status:null, status_started:null, num_marked:false });
-    }
-    const cell = document.querySelector(`.table[data-zone="${z}"][data-num="${n}"]`);
-    if(cell){
-      applyStatus(cell, arrived ? 'nieuw' : null);
-      setNumFlag(cell, arrived);
-      if(!arrived) setTimer(cell,'');
+  Object.assign(res, patch);
+
+  // Tafels syncen alleen bij overgang pending <-> (partial/complete)
+  const wasActive = prev !== 'pending';
+  const isActive  = state !== 'pending';
+  if(wasActive !== isActive){
+    for(const n of (res.table_nums||[])){
+      const z = inferZone(n) || res.zone;
+      if(!z) continue;
+      if(isActive){
+        await upsertTable(z, n, { status:'nieuw', status_started:now, num_marked:true });
+      } else {
+        await upsertTable(z, n, { status:null, status_started:null, num_marked:false });
+      }
+      const cell = document.querySelector(`.table[data-zone="${z}"][data-num="${n}"]`);
+      if(cell){
+        applyStatus(cell, isActive ? 'nieuw' : null);
+        setNumFlag(cell, isActive);
+        if(!isActive) setTimer(cell, '');
+      }
     }
   }
+
   refreshDerived();
   renderReservationsView();
 }
@@ -1588,31 +1694,35 @@ function renderReservationsDerived(){
 }
 
 function makeResRow(r){
-  const row = document.createElement('div');
-  row.className = 'res-row' + (r.arrived ? ' arrived' : '');
+  const state = getArrivalState(r);
+  const row = document.createElement('button');
+  row.type = 'button';
+  row.className = 'res-row' + (state === 'complete' ? ' arrived' : state === 'partial' ? ' partial' : '');
   row.dataset.id = r.id;
 
-  const timeTxt = r.res_time ? r.res_time.slice(0,5) : '—';
+  const timeTxt  = r.res_time ? r.res_time.slice(0,5) : '—';
   const tablesTxt = (r.table_nums||[]).join(' · ') || '—';
-  const partyTxt = r.party_size ? `${r.party_size}p` : '';
+  const partyHtml = r.party_size ? `<span class="res-party">${r.party_size}p</span>` : '';
+  const stateChip = state === 'partial'  ? `<span class="res-state-chip partial">Deels</span>`
+                 : state === 'complete' ? `<span class="res-state-chip complete">Binnen</span>`
+                 : '';
 
   row.innerHTML = `
-    <div class="res-time">${timeTxt}</div>
-    <div class="res-body">
-      <div class="res-name">${escapeHtml(r.name || '(onbekend)')}</div>
-      <div class="res-meta">
-        ${partyTxt ? `<span>${partyTxt}</span>` : ''}
-        <span class="res-tables">T ${escapeHtml(tablesTxt)}</span>
-      </div>
-      ${r.notes ? `<span class="res-note-bubble">${escapeHtml(r.notes)}</span>` : ''}
+    <div class="res-table-badge">
+      <span class="rtb-tnum">${escapeHtml(tablesTxt)}</span>
+      <span class="rtb-lbl">TAFEL</span>
     </div>
-    <button class="res-arrive">${r.arrived ? '✓ Binnen' : 'Binnen'}</button>
+    <div class="res-body">
+      <span class="res-time">${timeTxt}</span>
+      <span class="res-name">${escapeHtml(r.name || '(onbekend)')}${stateChip}</span>
+      ${partyHtml}
+      ${r.notes ? `<span class="res-note-inline">${escapeHtml(r.notes)}</span>` : ''}
+    </div>
   `;
 
-  row.querySelector('.res-arrive').addEventListener('click', async (e)=>{
-    e.stopPropagation();
-    haptic(15);
-    await setReservationArrived(r, !r.arrived);
+  row.addEventListener('click', ()=>{
+    haptic(10);
+    openArriveModal(r);
   });
   return row;
 }
@@ -1621,8 +1731,8 @@ function renderResList(){
   resListEl.innerHTML = '';
   arrivedPanelEl.innerHTML = '';
 
-  const notArrived = reservations.filter(r => !r.arrived);
-  const arrived    = reservations.filter(r => r.arrived);
+  const inProgress = reservations.filter(r => getArrivalState(r) !== 'complete');
+  const completed  = reservations.filter(r => getArrivalState(r) === 'complete');
 
   if(!reservations.length){
     const e = document.createElement('div');
@@ -1630,79 +1740,121 @@ function renderResList(){
     e.textContent = sb ? 'Geen reserveringen voor deze dag.' : 'Offline — geen Supabase-verbinding.';
     resListEl.appendChild(e);
     resListSubEl.textContent = '0';
-  } else if(!notArrived.length){
+  } else if(!inProgress.length){
     const e = document.createElement('div');
     e.className = 'res-empty';
     e.textContent = 'Alle reserveringen zijn binnen.';
     resListEl.appendChild(e);
     resListSubEl.textContent = '0';
   } else {
-    for(const r of notArrived) resListEl.appendChild(makeResRow(r));
-    resListSubEl.textContent = `${notArrived.length}`;
+    for(const r of inProgress) resListEl.appendChild(makeResRow(r));
+    resListSubEl.textContent = `${inProgress.length}`;
   }
 
-  for(const r of arrived) arrivedPanelEl.appendChild(makeResRow(r));
-  arrivedToggleLblEl.textContent = `Al binnen: ${arrived.length}`;
-  arrivedToggleEl.style.display = arrived.length ? '' : 'none';
+  for(const r of completed) arrivedPanelEl.appendChild(makeResRow(r));
+  arrivedToggleLblEl.textContent = `Al binnen: ${completed.length}`;
+  arrivedToggleEl.style.display = completed.length ? '' : 'none';
 }
 
+/* ===== Arrive modal ===== */
+function openArriveModal(r){
+  arrivingRes = r;
+  const state = getArrivalState(r);
+  const tablesTxt = (r.table_nums||[]).join(' · ') || '—';
+  const partyTxt = r.party_size ? ` — ${r.party_size}p` : '';
+  arriveTitleEl.textContent = `T ${tablesTxt}  ·  ${r.name || '(onbekend)'}${partyTxt}`;
+  const timeTxt = r.res_time ? r.res_time.slice(0,5) : '';
+  arriveSubEl.textContent = `${timeTxt}${r.notes ? ' · ' + r.notes : ''}`;
+
+  // Actieve knop uitlichten
+  arrivePartialEl.classList.toggle('focus-on', state === 'partial');
+  arriveCompleteEl.classList.toggle('focus-on', state === 'complete');
+  arriveUndoEl.style.display = state === 'pending' ? 'none' : '';
+
+  arriveOverlayEl.classList.add('open');
+}
+function closeArriveModal(){
+  arriveOverlayEl.classList.remove('open');
+  arrivingRes = null;
+}
+arriveOverlayEl.addEventListener('click', (e)=>{ if(e.target===arriveOverlayEl) closeArriveModal(); });
+arriveCloseEl.addEventListener('click', closeArriveModal);
+arrivePartialEl.addEventListener('click', async ()=>{
+  if(!arrivingRes) return;
+  haptic(15);
+  const r = arrivingRes; closeArriveModal();
+  await setArrivalState(r, 'partial');
+});
+arriveCompleteEl.addEventListener('click', async ()=>{
+  if(!arrivingRes) return;
+  haptic(20);
+  const r = arrivingRes; closeArriveModal();
+  await setArrivalState(r, 'complete');
+});
+arriveUndoEl.addEventListener('click', async ()=>{
+  if(!arrivingRes) return;
+  haptic(12);
+  const r = arrivingRes; closeArriveModal();
+  await setArrivalState(r, 'pending');
+});
+
 function renderFreeTables(){
-  freeTablesEl.innerHTML = '';
+  freeGroupsEl.innerHTML = '';
   const free = [];
   for(const g of GROUPS){
     for(const n of expandRanges(g.ranges)){
       const r = rows.get(keyOf(g.zone, n));
-      if(!r || !r.status) free.push({zone:g.zone, num:n});
+      if(!r || !r.status) free.push({zone:g.zone, num:n, cap: TABLE_CAPACITIES[n] || 0});
     }
   }
   freeSubEl.textContent = `${free.length} tafels`;
-  statFreeEl.textContent = free.length;
 
+  // Groeperen op capaciteit
+  const byCap = new Map();
   for(const t of free){
-    const el = document.createElement('button');
-    el.type = 'button';
-    el.className = 'free-tile';
-    el.innerHTML = `<span class="tnum">${t.num}</span><span class="zone">${t.zone==='bt'?'Beneden':'Boven'}</span>`;
-    el.addEventListener('click', async ()=>{
-      haptic(15);
-      await upsertTable(t.zone, t.num, { status:'nieuw', status_started:new Date().toISOString(), num_marked:true });
-      const cell = document.querySelector(`.table[data-zone="${t.zone}"][data-num="${t.num}"]`);
-      if(cell){ applyStatus(cell, 'nieuw'); setNumFlag(cell, true); }
-      refreshDerived();
-    });
-    freeTablesEl.appendChild(el);
+    const key = t.cap || 0;
+    if(!byCap.has(key)) byCap.set(key, []);
+    byCap.get(key).push(t);
   }
-}
+  // Capaciteiten oplopend, onbekende (0) onderaan
+  const caps = [...byCap.keys()].sort((a,b)=>{
+    if(a === 0) return 1;
+    if(b === 0) return -1;
+    return a - b;
+  });
 
-function renderBusyTables(){
-  busyListEl.innerHTML = '';
-  const busy = [];
-  for(const [k, r] of rows.entries()){
-    if(r.status && r.status_started){
-      busy.push(r);
+  for(const cap of caps){
+    const tiles = byCap.get(cap).sort((a,b)=> a.num - b.num);
+
+    const row = document.createElement('div');
+    row.className = 'fg-row';
+
+    const lbl = document.createElement('div');
+    lbl.className = 'fg-label';
+    lbl.textContent = cap ? `${cap}p` : '?';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'fg-tiles';
+
+    for(const t of tiles){
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'free-tile';
+      el.textContent = t.num;
+      el.addEventListener('click', async ()=>{
+        haptic(15);
+        await upsertTable(t.zone, t.num, { status:'nieuw', status_started:new Date().toISOString(), num_marked:true });
+        const cell = document.querySelector(`.table[data-zone="${t.zone}"][data-num="${t.num}"]`);
+        if(cell){ applyStatus(cell, 'nieuw'); setNumFlag(cell, true); }
+        refreshDerived();
+      });
+      wrap.appendChild(el);
     }
-  }
-  busy.sort((a,b)=> Date.parse(a.status_started) - Date.parse(b.status_started));
-  busySubEl.textContent = `${busy.length} tafels`;
-  statBusyEl.textContent = busy.length;
 
-  const now = Date.now();
-  for(const r of busy){
-    const el = document.createElement('div');
-    el.className = `busy-tile bt-${r.status}`;
-    const elapsed = fmtElapsed(now - Date.parse(r.status_started));
-    el.innerHTML = `
-      <span class="bt-num">${r.table_num}</span>
-      <span class="bt-status">${r.status}</span>
-      <span class="bt-timer">${elapsed}</span>
-    `;
-    busyListEl.appendChild(el);
+    row.appendChild(lbl);
+    row.appendChild(wrap);
+    freeGroupsEl.appendChild(row);
   }
-}
-
-function renderResStats(){
-  statTotalEl.textContent = reservations.length;
-  statArrivedEl.textContent = reservations.filter(r=>r.arrived).length;
 }
 
 function escapeHtml(s){
@@ -1780,10 +1932,14 @@ function subscribeRealtimeReservations(){
     .subscribe();
 }
 
-/* Update busy timers elke seconde in reserveringsview */
-setInterval(()=>{
-  if(currentView === 'reservations') renderBusyTables();
-}, 1000);
+/* Arrived-panel toggle */
+arrivedToggleEl.addEventListener('click', ()=>{
+  const open = arrivedToggleEl.getAttribute('aria-expanded') === 'true';
+  const next = !open;
+  arrivedToggleEl.setAttribute('aria-expanded', next ? 'true' : 'false');
+  arrivedPanelEl.hidden = !next;
+  haptic(8);
+});
 
 statusBarEl.addEventListener('click', (e)=>{
   const pill = e.target.closest('.pill');
