@@ -1105,7 +1105,7 @@ const BROADCAST_CLEAR = "__CLEAR__";
 
 /* ===== Config ===== */
 const RANGES_BENEDEN = [[1,13]];
-const RANGES_BOVEN   = [[20,58]];
+const RANGES_BOVEN   = [[20,54],[57,58]];
 const GROUPS = [
   { label:'Beneden', zone:'bt', ranges:RANGES_BENEDEN },
   { label:'Boven',   zone:'boven', ranges:RANGES_BOVEN }
@@ -1777,13 +1777,42 @@ function renderFreeTables(){
     `;
     el.addEventListener('click', async ()=>{
       haptic(15);
-      await upsertTable(t.zone, t.num, { status:'nieuw', status_started:new Date().toISOString(), num_marked:true });
-      const cell = document.querySelector(`.table[data-zone="${t.zone}"][data-num="${t.num}"]`);
-      if(cell){ applyStatus(cell, 'nieuw'); setNumFlag(cell, true); }
-      refreshDerived();
+      await createPassant(t.zone, t.num);
     });
     freeGroupsEl.appendChild(el);
   }
+}
+
+async function createPassant(zone, num){
+  const now = new Date().toISOString();
+  // 1) Tafel markeren als nieuw
+  await upsertTable(zone, num, { status:'nieuw', status_started:now, num_marked:true });
+  const cell = document.querySelector(`.table[data-zone="${zone}"][data-num="${num}"]`);
+  if(cell){ applyStatus(cell, 'nieuw'); setNumFlag(cell, true); }
+
+  // 2) Passant-reservering aanmaken (al binnen)
+  const payload = {
+    res_date: currentResDate,
+    name: 'Passant',
+    table_nums: [num],
+    zone,
+    arrived: true,
+    arrived_at: now,
+    source: 'walkin'
+  };
+
+  if(sb){
+    try{
+      const { data, error } = await sb.from('reservations').insert(payload).select().single();
+      if(error){ console.error('passant insert', error); }
+      else if(data){ reservations.push(data); }
+    }catch(e){ console.error('passant ex', e); }
+  } else {
+    reservations.push({ id: 'local-'+Date.now(), ...payload });
+  }
+
+  refreshDerived();
+  renderReservationsView();
 }
 
 function escapeHtml(s){
