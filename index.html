@@ -1248,6 +1248,20 @@
     </div>
   </div>
 
+  <!-- Reset alles bevestiging -->
+  <div id="resetOverlay" class="overlay" aria-modal="true" role="dialog">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="arrive-title">Alles resetten?</div>
+        <div class="arrive-sub">Alle tafelstatussen en gemarkeerde nummers worden gewist. Reserveringen blijven staan.</div>
+      </div>
+      <div class="arrive-actions">
+        <button class="choice arrive-release-confirm arrive-size-lg" id="resetConfirm">Ja, alles resetten</button>
+        <button class="choice reset arrive-size-sm" id="resetCancel">Annuleren</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Tafel vrijgeven bevestiging -->
   <div id="releaseOverlay" class="overlay" aria-modal="true" role="dialog">
     <div class="modal">
@@ -2734,7 +2748,23 @@ async function fullResetAll(){
   prevUrgencyLevel.clear();
   render();
 }
-resetAllBtn.addEventListener('click', fullResetAll);
+const resetOverlayEl = document.getElementById('resetOverlay');
+const resetConfirmEl = document.getElementById('resetConfirm');
+const resetCancelEl  = document.getElementById('resetCancel');
+
+resetAllBtn.addEventListener('click', ()=>{
+  haptic(10);
+  resetOverlayEl.classList.add('open');
+});
+resetCancelEl.addEventListener('click', ()=> resetOverlayEl.classList.remove('open'));
+resetOverlayEl.addEventListener('click', (e)=>{
+  if(e.target === resetOverlayEl) resetOverlayEl.classList.remove('open');
+});
+resetConfirmEl.addEventListener('click', async ()=>{
+  haptic(25);
+  resetOverlayEl.classList.remove('open');
+  await fullResetAll();
+});
 
 /* Auto reset 02:00 */
 async function autoDailyResetCheck(){
