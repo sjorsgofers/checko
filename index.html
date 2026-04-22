@@ -628,7 +628,109 @@
     min-height:0;
     overflow:hidden;
   }
-  .res-section.res-free{ flex:0 0 auto; }
+  .res-section.res-free{
+    flex:1 1 auto;
+    min-height:0;
+    overflow:hidden;
+  }
+
+  /* Split: 2/3 reserveringen | 1/3 vrije tafels */
+  .res-split{
+    display:grid;
+    grid-template-columns:2fr 1fr;
+    gap:10px;
+    flex:1 1 auto;
+    min-height:0;
+    overflow:hidden;
+  }
+  .res-left, .res-right{
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    overflow:hidden;
+  }
+  .res-right .free-groups{
+    max-height:none;
+    flex:1 1 auto;
+    min-height:0;
+    align-content:flex-start;
+  }
+
+  /* Edit-mode knop + visuals */
+  .edit-btn{
+    border:1.5px solid var(--rekening);
+    color:#38bdf8;
+    font-weight:800;
+  }
+  .edit-btn[aria-pressed="true"]{
+    background:linear-gradient(180deg, #34d399 0%, var(--run) 100%);
+    border-color:var(--run);
+    color:#fff;
+    box-shadow:0 0 0 2px rgba(52,211,153,.35);
+  }
+
+  body.edit-mode .res-list{
+    padding:2px;
+  }
+  body.edit-mode .res-row{
+    cursor:copy;
+  }
+  body.edit-mode .res-row.selected{
+    outline:2.5px solid #38bdf8;
+    outline-offset:-2px;
+    box-shadow:0 0 0 4px rgba(56,189,248,.25);
+  }
+  body.edit-mode .res-row.drag-over{
+    outline:2.5px dashed #34d399;
+    outline-offset:-2px;
+    background:linear-gradient(180deg, rgba(16,185,129,.16) 0%, rgba(16,185,129,.04) 100%) !important;
+  }
+
+  body.edit-mode .free-tile{
+    cursor:grab;
+  }
+  body.edit-mode .free-tile:active{ cursor:grabbing; }
+  body.edit-mode .free-tile.dragging{
+    opacity:.5;
+    transform:scale(.92);
+  }
+
+  /* Edit-mode hint bar */
+  .edit-hint{
+    display:none;
+    padding:6px 10px;
+    background:linear-gradient(180deg, rgba(56,189,248,.14) 0%, rgba(56,189,248,.04) 100%);
+    border:1px solid rgba(56,189,248,.35);
+    border-radius:8px;
+    font-size:clamp(11px, 1.6vw, 13px);
+    color:#bae6fd;
+    font-weight:700;
+    flex:0 0 auto;
+  }
+  body.edit-mode .edit-hint{ display:block; }
+
+  /* Chip om een gekoppelde tafel in edit-mode te verwijderen */
+  .res-table-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:4px 8px 4px 10px;
+    border-radius:8px;
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.28);
+    font-weight:900;
+    font-size:clamp(17px, 2.8vw, 21px);
+    color:#fff;
+    font-variant-numeric:tabular-nums;
+  }
+  .res-table-chip .x{
+    display:none;
+    cursor:pointer;
+    color:#f87171;
+    font-weight:900;
+    padding:0 2px;
+  }
+  body.edit-mode .res-table-chip .x{ display:inline; }
 
   .res-section-head{
     display:flex;
@@ -776,8 +878,14 @@
   }
 
   .res-tables-text{
-    font-weight:800;
-    font-size:clamp(14px, 2.2vw, 17px);
+    display:inline-flex;
+    align-items:center;
+    padding:3px 10px;
+    border-radius:8px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.22);
+    font-weight:900;
+    font-size:clamp(17px, 2.8vw, 21px);
     color:#fff;
     font-variant-numeric:tabular-nums;
     letter-spacing:-.01em;
@@ -1137,25 +1245,34 @@
       <button class="btn arrived-btn" id="arrivedToggle" type="button" aria-expanded="false">
         Al binnen <span class="arrived-count" id="arrivedToggleLbl">0</span>
       </button>
+      <button class="btn edit-btn" id="resEdit" type="button" aria-pressed="false">Bewerken</button>
+      <button class="btn trash-btn" id="resTrash" type="button">Prullenbak</button>
       <button class="btn gold" id="resRefresh">Vernieuwen</button>
     </div>
 
     <div class="arrived-panel" id="arrivedPanel" hidden></div>
 
-    <div class="res-section res-main">
-      <div class="res-section-head">
-        <span class="res-section-title">Nog niet binnen</span>
-        <span class="res-section-sub" id="resListSub"></span>
-      </div>
-      <div class="res-list" id="resList"></div>
-    </div>
+    <div class="edit-hint" id="editHint">Bewerkmodus — kies een reservering en klik of sleep een vrije tafel om te koppelen. Druk op Opslaan als je klaar bent.</div>
 
-    <div class="res-section res-free">
-      <div class="res-section-head">
-        <span class="res-section-title">Vrije tafels</span>
-        <span class="res-section-sub" id="freeSub">—</span>
+    <div class="res-split">
+      <div class="res-left">
+        <div class="res-section res-main">
+          <div class="res-section-head">
+            <span class="res-section-title">Nog niet binnen</span>
+            <span class="res-section-sub" id="resListSub"></span>
+          </div>
+          <div class="res-list" id="resList"></div>
+        </div>
       </div>
-      <div class="free-groups" id="freeGroups"></div>
+      <div class="res-right">
+        <div class="res-section res-free">
+          <div class="res-section-head">
+            <span class="res-section-title">Vrije tafels</span>
+            <span class="res-section-sub" id="freeSub">—</span>
+          </div>
+          <div class="free-groups" id="freeGroups"></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1244,6 +1361,20 @@
       <div class="modal-footer">
         <button class="link" id="newResCancel">Annuleren</button>
         <button class="link primary" id="newResSave">Opslaan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prullenbak: vrijgegeven reserveringen terughalen -->
+  <div id="trashOverlay" class="overlay" aria-modal="true" role="dialog">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="arrive-title">Prullenbak</div>
+        <div class="arrive-sub" id="trashSub">Vrijgegeven reserveringen van deze dag. Tik op "Terughalen" om ze terug in de lijst te zetten.</div>
+      </div>
+      <div class="arrive-actions" id="trashList"></div>
+      <div class="modal-footer">
+        <button class="link" id="trashClose">Sluiten</button>
       </div>
     </div>
   </div>
@@ -1498,6 +1629,12 @@ const newResSaveEl = document.getElementById('newResSave');
 const newResCancelEl = document.getElementById('newResCancel');
 let pendingFreeTable = null;
 let selectedTimeSlot = null;
+
+const resEditBtnEl = document.getElementById('resEdit');
+let editMode = false;
+let selectedResId = null;
+const dirtyIds = new Set();
+const editSnapshot = new Map();
 
 const changeTableOverlayEl = document.getElementById('changeTableOverlay');
 const changeTableSubEl = document.getElementById('changeTableSub');
@@ -1946,24 +2083,24 @@ async function setArrivalState(res, state){
   }
   Object.assign(res, patch);
 
-  // Tafels syncen alleen bij overgang pending <-> (partial/complete)
-  const wasActive = prev !== 'pending';
-  const isActive  = state !== 'pending';
-  if(wasActive !== isActive){
-    for(const n of (res.table_nums||[])){
-      const z = inferZone(n) || res.zone;
-      if(!z) continue;
-      if(isActive){
-        await upsertTable(z, n, { status:'nieuw', status_started:now, num_marked:true });
-      } else {
-        await upsertTable(z, n, { status:null, status_started:null, num_marked:false });
-      }
-      const cell = document.querySelector(`.table[data-zone="${z}"][data-num="${n}"]`);
-      if(cell){
-        applyStatus(cell, isActive ? 'nieuw' : null);
-        setNumFlag(cell, isActive);
-        if(!isActive) setTimer(cell, '');
-      }
+  // Tafels altijd syncen: bij elke partial/complete opnieuw 'nieuw' + reset van status_started,
+  // zodat de timer in het tafeloverzicht opnieuw begint (personeel ziet dat ze weer langs moeten).
+  const isActive = state !== 'pending';
+  for(const n of (res.table_nums||[])){
+    const z = inferZone(n) || res.zone;
+    if(!z) continue;
+    if(isActive){
+      await upsertTable(z, n, { status:'nieuw', status_started:now, num_marked:true });
+      prevUrgencyLevel.delete(keyOf(z, n));
+    } else {
+      await upsertTable(z, n, { status:null, status_started:null, num_marked:false });
+    }
+    const cell = document.querySelector(`.table[data-zone="${z}"][data-num="${n}"]`);
+    if(cell){
+      applyStatus(cell, isActive ? 'nieuw' : null);
+      setNumFlag(cell, isActive);
+      if(!isActive) setTimer(cell, '');
+      cell.classList.remove('urgency-warn','urgency-crit');
     }
   }
 
@@ -1998,11 +2135,12 @@ function makeResRow(r){
   if(state === 'complete') cls += ' arrived';
   else if(state === 'partial') cls += ' partial';
   if(late) cls += ' late';
+  if(editMode && selectedResId === r.id) cls += ' selected';
   row.className = cls;
   row.dataset.id = r.id;
 
   const timeTxt  = r.res_time ? r.res_time.slice(0,5) : '—';
-  const tablesTxt = (r.table_nums||[]).join(' · ') || '—';
+  const nums     = r.table_nums || [];
   const partyHtml = r.party_size ? `<span class="res-party">${r.party_size}p</span>` : '';
   const stateChip = state === 'partial'  ? `<span class="res-state-chip partial">Deels</span>`
                  : state === 'complete' ? `<span class="res-state-chip complete">Binnen</span>`
@@ -2012,23 +2150,60 @@ function makeResRow(r){
     ? `<a class="res-phone-link" href="${telHref(r.phone)}" data-phone="1">${escapeHtml(r.phone)}</a>`
     : '';
 
+  let tablesHtml;
+  if(editMode){
+    tablesHtml = nums.length
+      ? nums.map(n => `<span class="res-table-chip" data-tnum="${n}">${n}<span class="x" data-del="${n}">×</span></span>`).join(' ')
+      : `<span class="res-tables-text" style="opacity:.5">T —</span>`;
+  } else {
+    const tablesTxt = nums.join(' · ') || '—';
+    tablesHtml = `<span class="res-tables-text">T ${escapeHtml(tablesTxt)}</span>`;
+  }
+
   row.innerHTML = `
     <span class="res-time">${timeTxt}</span>
     <span class="res-name">${escapeHtml(r.name || '(onbekend)')}${stateChip}</span>
     ${lateChip}
     ${phoneHtml}
-    <span class="res-tables-text">T ${escapeHtml(tablesTxt)}</span>
+    ${tablesHtml}
     ${partyHtml}
     ${r.notes ? `<span class="res-note-inline">${escapeHtml(r.notes)}</span>` : ''}
   `;
 
-  // Klik op telefoonlink mag niet de arrive-modal openen
   const phoneEl = row.querySelector('[data-phone="1"]');
-  if(phoneEl){
-    phoneEl.addEventListener('click', (e)=> e.stopPropagation());
+  if(phoneEl){ phoneEl.addEventListener('click', (e)=> e.stopPropagation()); }
+
+  if(editMode){
+    row.querySelectorAll('[data-del]').forEach(x => {
+      x.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        removeTableFromRes(r.id, Number(x.dataset.del));
+      });
+    });
+
+    row.addEventListener('dragover', (e)=>{
+      e.preventDefault();
+      if(e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+      row.classList.add('drag-over');
+    });
+    row.addEventListener('dragleave', ()=> row.classList.remove('drag-over'));
+    row.addEventListener('drop', (e)=>{
+      e.preventDefault();
+      row.classList.remove('drag-over');
+      const num = Number(e.dataTransfer?.getData('text/plain'));
+      if(!Number.isFinite(num)) return;
+      selectedResId = r.id;
+      assignTableToSelected(num);
+    });
   }
 
   row.addEventListener('click', ()=>{
+    if(editMode){
+      selectedResId = r.id;
+      haptic(8);
+      renderResList();
+      return;
+    }
     haptic(10);
     openArriveModal(r);
   });
@@ -2415,13 +2590,124 @@ function renderFreeTables(){
       <span class="tnum">${t.num}</span>
       <span class="cap-inline">${t.cap ? `(${t.cap})` : ''}</span>
     `;
+    if(editMode){
+      el.setAttribute('draggable', 'true');
+      el.addEventListener('dragstart', (e)=>{
+        if(e.dataTransfer){
+          e.dataTransfer.setData('text/plain', String(t.num));
+          e.dataTransfer.effectAllowed = 'move';
+        }
+        el.classList.add('dragging');
+      });
+      el.addEventListener('dragend', ()=> el.classList.remove('dragging'));
+    }
     el.addEventListener('click', ()=>{
       haptic(10);
+      if(editMode){
+        if(selectedResId) assignTableToSelected(t.num);
+        return;
+      }
       openFreeActionModal(t);
     });
     freeGroupsEl.appendChild(el);
   }
 }
+
+/* ===== Edit-mode: koppelen, loskoppelen, opslaan ===== */
+function assignTableToSelected(num){
+  if(!selectedResId) return;
+  const r = reservations.find(x => x.id === selectedResId);
+  if(!r) return;
+  const nums = [...(r.table_nums||[])];
+  if(nums.includes(num)) return;
+  nums.push(num);
+  r.table_nums = nums;
+  r.zone = inferZone(nums[0]) || r.zone;
+  dirtyIds.add(r.id);
+  haptic(15);
+  renderReservationsView();
+}
+
+function removeTableFromRes(id, num){
+  const r = reservations.find(x => x.id === id);
+  if(!r) return;
+  r.table_nums = (r.table_nums||[]).filter(n => n !== num);
+  dirtyIds.add(r.id);
+  haptic(10);
+  renderReservationsView();
+}
+
+function enterEditMode(){
+  editMode = true;
+  selectedResId = null;
+  dirtyIds.clear();
+  editSnapshot.clear();
+  for(const r of reservations){ editSnapshot.set(r.id, [...(r.table_nums||[])]); }
+  resEditBtnEl.textContent = 'Opslaan';
+  resEditBtnEl.setAttribute('aria-pressed', 'true');
+  document.body.classList.add('edit-mode');
+  renderReservationsView();
+}
+
+async function exitEditModeAndSave(){
+  if(dirtyIds.size){
+    for(const id of [...dirtyIds]){
+      const r = reservations.find(x => x.id === id);
+      if(!r) continue;
+      const oldNums = editSnapshot.get(id) || [];
+      const newNums = r.table_nums || [];
+      const state = getArrivalState(r);
+      const now = new Date().toISOString();
+
+      // Update reservering-rij
+      if(sb){
+        try{
+          const { error } = await sb.from('reservations').update({
+            table_nums: newNums,
+            zone: inferZone(newNums[0]) || r.zone,
+            updated_at: now
+          }).eq('id', id);
+          if(error) console.error('edit save', error);
+        }catch(e){ console.error('edit save ex', e); }
+      }
+
+      // Bij actieve reservering: tables_status bijwerken
+      if(state !== 'pending'){
+        for(const n of oldNums){
+          if(newNums.includes(n)) continue;
+          const z = inferZone(n);
+          if(!z) continue;
+          await upsertTable(z, n, { status:null, status_started:null, num_marked:false });
+          const cell = document.querySelector(`.table[data-zone="${z}"][data-num="${n}"]`);
+          if(cell){ applyStatus(cell, null); setNumFlag(cell, false); setTimer(cell, ''); }
+        }
+        for(const n of newNums){
+          if(oldNums.includes(n)) continue;
+          const z = inferZone(n);
+          if(!z) continue;
+          await upsertTable(z, n, { status:'nieuw', status_started:now, num_marked:true });
+          const cell = document.querySelector(`.table[data-zone="${z}"][data-num="${n}"]`);
+          if(cell){ applyStatus(cell, 'nieuw'); setNumFlag(cell, true); }
+        }
+      }
+    }
+  }
+  editMode = false;
+  selectedResId = null;
+  dirtyIds.clear();
+  editSnapshot.clear();
+  resEditBtnEl.textContent = 'Bewerken';
+  resEditBtnEl.setAttribute('aria-pressed', 'false');
+  document.body.classList.remove('edit-mode');
+  refreshDerived();
+  renderReservationsView();
+}
+
+resEditBtnEl.addEventListener('click', async ()=>{
+  haptic(12);
+  if(editMode){ await exitEditModeAndSave(); }
+  else { enterEditMode(); }
+});
 
 /* ===== Vrije tafel → Passant of Nieuwe reservering ===== */
 function openFreeActionModal(t){
