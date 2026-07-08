@@ -342,3 +342,558 @@
   })();
   </script>
 </div>
+
+<!-- ============================================================
+     DANSSCHOOL FRESH — LESROOSTER WIDGET (powered by BuzzFlow)
+     ------------------------------------------------------------
+     • Live gekoppeld aan de BuzzFlow ledenbeheer-app: het rooster,
+       de OPEN/VOL-status en proefles-aanmeldingen lopen allemaal
+       via dezelfde database, Google Agenda en presentielijsten.
+     • Proefles aanmelden → komt automatisch in de proeflessen-
+       agenda, in de app en op de presentielijst van de docent.
+
+     PLAATSEN OP WORDPRESS:
+       Voeg een "Aangepaste HTML" blok toe en plak deze volledige
+       code erin. Klaar — geen verdere configuratie nodig.
+     ============================================================ -->
+
+<div id="fresh-rooster">
+
+  <style>
+    #fresh-rooster *, #fresh-rooster *::before, #fresh-rooster *::after { box-sizing: border-box; }
+
+    #fresh-rooster {
+      /* Huisstijl Dansschool Fresh */
+      --fr-accent:      #3d92c4;   /* fresh-blauw */
+      --fr-accent-dark: #2f7aa6;
+      --fr-accent-diep: #23648a;
+      --fr-accent-licht:#e8f3fa;
+      --fr-bg:          #f9fafb;   /* gray-50 */
+      --fr-kaart:       #ffffff;
+      --fr-lijn:        #e5e7eb;   /* gray-200 */
+      --fr-tekst:       #111827;   /* gray-900 */
+      --fr-tekst-zacht: #6b7280;   /* gray-500 */
+      --fr-tekst-dim:   #9ca3af;   /* gray-400 */
+      --fr-groen:       #059669;
+      --fr-rood:        #dc2626;
+      --fr-radius:      14px;
+
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: var(--fr-tekst);
+      background: var(--fr-bg);
+      border: 1px solid var(--fr-lijn);
+      border-radius: var(--fr-radius);
+      box-shadow: 0 8px 24px rgba(17,24,39,.07);
+      padding: clamp(12px, 2vw, 18px);
+      max-width: 940px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    /* ---------- Kop + locatie-tabs ---------- */
+    #fresh-rooster .fr-head { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+    #fresh-rooster .fr-title { margin:0; font-size:clamp(1.15rem,3vw,1.45rem); font-weight:800; letter-spacing:-.02em; }
+    #fresh-rooster .fr-title span { color: var(--fr-accent); }
+
+    #fresh-rooster .fr-locs { display:flex; gap:5px; background:#fff; border:1px solid var(--fr-lijn); border-radius:999px; padding:3px; }
+    #fresh-rooster .fr-loc {
+      border:none; cursor:pointer; font-family:inherit; font-size:.82rem; font-weight:700;
+      padding:7px 16px; border-radius:999px; background:transparent; color:var(--fr-tekst-zacht);
+      transition: background .15s ease, color .15s ease;
+    }
+    #fresh-rooster .fr-loc.is-actief { background:var(--fr-accent); color:#fff; }
+    #fresh-rooster .fr-loc:not(.is-actief):hover { color:var(--fr-tekst); }
+
+    /* ---------- Week-navigatie + filters ---------- */
+    #fresh-rooster .fr-nav { display:flex; align-items:center; gap:5px; background:#fff; border:1px solid var(--fr-lijn); border-radius:999px; padding:3px; }
+    #fresh-rooster .fr-nav button {
+      width:30px; height:30px; border:none; border-radius:50%; background:#f3f4f6; color:var(--fr-tekst);
+      font-size:1rem; cursor:pointer; display:grid; place-items:center; transition:background .15s ease;
+    }
+    #fresh-rooster .fr-nav button:hover { background:var(--fr-accent); color:#fff; }
+    #fresh-rooster .fr-weeklabel { min-width:110px; text-align:center; font-weight:600; font-size:.82rem; color:var(--fr-tekst-zacht); text-transform:capitalize; }
+    #fresh-rooster .fr-vandaag { width:auto !important; padding:0 12px; border-radius:999px !important; font-size:.76rem; font-weight:600; background:transparent !important; border:1px solid var(--fr-lijn) !important; color:var(--fr-tekst-zacht) !important; }
+    #fresh-rooster .fr-vandaag:hover { color:var(--fr-accent) !important; border-color:var(--fr-accent) !important; }
+
+    #fresh-rooster .fr-filters { display:flex; gap:6px; flex-wrap:wrap; }
+    #fresh-rooster .fr-filter {
+      font-family:inherit; font-size:.8rem; font-weight:600; color:var(--fr-tekst-zacht);
+      background:#fff; border:1px solid var(--fr-lijn); border-radius:999px; padding:7px 30px 7px 14px;
+      cursor:pointer; appearance:none; -webkit-appearance:none;
+      background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 12px center;
+      max-width:170px; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;
+    }
+    #fresh-rooster .fr-filter:focus { outline:none; border-color:var(--fr-accent); box-shadow:0 0 0 3px rgba(61,146,196,.18); }
+    #fresh-rooster .fr-filter.is-actief { border-color:var(--fr-accent); color:var(--fr-accent-dark); background-color:var(--fr-accent-licht); }
+
+    /* ---------- Dagen ---------- */
+    #fresh-rooster .fr-days { display:flex; flex-direction:column; gap:7px; }
+    #fresh-rooster .fr-day { background:var(--fr-kaart); border:1px solid var(--fr-lijn); border-radius:10px; overflow:hidden; animation:fr-fade .25s ease both; box-shadow:0 1px 2px rgba(17,24,39,.04); }
+    @keyframes fr-fade { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+
+    #fresh-rooster .fr-day-head { display:flex; align-items:baseline; gap:8px; padding:7px 14px; border-bottom:1px solid #f3f4f6; background:#fafafa; }
+    #fresh-rooster .fr-day-name { font-weight:700; font-size:.9rem; text-transform:capitalize; }
+    #fresh-rooster .fr-day-date { color:var(--fr-tekst-dim); font-size:.75rem; }
+    #fresh-rooster .fr-day.is-vandaag .fr-day-name { color: var(--fr-accent); }
+    #fresh-rooster .fr-badge-vandaag { margin-left:auto; font-size:.6rem; font-weight:800; letter-spacing:.8px; text-transform:uppercase; color:#fff; background:var(--fr-accent); padding:2px 8px; border-radius:999px; }
+
+    /* ---------- Les-rijen ---------- */
+    #fresh-rooster .fr-les { display:flex; align-items:center; gap:10px; padding:7px 14px; border-bottom:1px solid #f3f4f6; }
+    #fresh-rooster .fr-les:last-child { border-bottom:none; }
+    #fresh-rooster .fr-les:hover { background:#f7fbfd; }
+
+    #fresh-rooster .fr-tijd {
+      flex:0 0 auto; min-width:58px; text-align:center; padding:4px 6px; border-radius:8px;
+      background:var(--fr-accent-licht); color:var(--fr-accent-dark); font-weight:800; font-size:.8rem; line-height:1.25;
+      font-variant-numeric:tabular-nums;
+    }
+    #fresh-rooster .fr-tijd small { display:block; color:#7ab4d4; font-weight:600; font-size:.65rem; }
+
+    #fresh-rooster .fr-info { flex:1 1 auto; min-width:0; }
+    #fresh-rooster .fr-les-naam { font-weight:600; font-size:.88rem; }
+    #fresh-rooster .fr-les-meta { margin-top:1px; color:var(--fr-tekst-zacht); font-size:.74rem; }
+
+    /* ---------- Proefles / VOL ---------- */
+    #fresh-rooster .fr-proefles {
+      flex:0 0 auto; border:none; cursor:pointer; font-family:inherit; font-size:.76rem; font-weight:700;
+      color:#fff; background:var(--fr-accent); padding:7px 14px; border-radius:999px; white-space:nowrap;
+      box-shadow:0 3px 10px rgba(61,146,196,.32); transition:transform .12s ease, background .15s ease;
+    }
+    #fresh-rooster .fr-proefles:hover { background:var(--fr-accent-dark); transform:translateY(-1px); }
+    #fresh-rooster .fr-vol {
+      flex:0 0 auto; font-size:.7rem; font-weight:800; letter-spacing:1px; color:var(--fr-rood);
+      background:#fee2e2; padding:7px 14px; border-radius:999px;
+    }
+    #fresh-rooster .fr-geweest { flex:0 0 auto; font-size:.72rem; color:var(--fr-tekst-dim); }
+
+    #fresh-rooster .fr-leeg { padding:9px 14px; color:var(--fr-tekst-dim); font-size:.8rem; font-style:italic; }
+    #fresh-rooster .fr-state { text-align:center; padding:40px 20px; color:var(--fr-tekst-zacht); }
+    #fresh-rooster .fr-spinner { width:32px; height:32px; margin:0 auto 12px; border:4px solid var(--fr-lijn); border-top-color:var(--fr-accent); border-radius:50%; animation:fr-spin 1s linear infinite; }
+    @keyframes fr-spin { to { transform:rotate(360deg); } }
+
+    #fresh-rooster .fr-foot { margin-top:10px; display:flex; align-items:center; justify-content:center; gap:4px; color:var(--fr-tekst-dim); font-size:.7rem; }
+    #fresh-rooster .fr-foot b { color:var(--fr-tekst-zacht); }
+    #fresh-rooster .fr-foot b span { color:#0ea5e9; }
+
+    /* ---------- Modal ---------- */
+    #fresh-rooster .fr-overlay {
+      position:fixed; inset:0; background:rgba(17,24,39,.5); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
+      display:none; align-items:flex-start; justify-content:center; padding:24px 14px; overflow-y:auto; z-index:99999;
+    }
+    #fresh-rooster .fr-overlay.is-open { display:flex; animation:fr-fade .2s ease; }
+    #fresh-rooster .fr-modal { width:100%; max-width:430px; margin:auto; background:#fff; border-radius:16px; box-shadow:0 24px 70px rgba(17,24,39,.3); overflow:hidden; animation:fr-pop .22s cubic-bezier(.2,.8,.3,1.1); }
+    @keyframes fr-pop { from { opacity:0; transform:translateY(10px) scale(.98); } to { opacity:1; transform:none; } }
+
+    #fresh-rooster .fr-modal-head { background:linear-gradient(135deg, var(--fr-accent), var(--fr-accent-diep)); padding:15px 20px; position:relative; color:#fff; }
+    #fresh-rooster .fr-modal-head h3 { margin:0; font-size:1.05rem; font-weight:800; }
+    #fresh-rooster .fr-les-sum { margin-top:5px; font-size:.82rem; color:rgba(255,255,255,.92); line-height:1.45; }
+    #fresh-rooster .fr-sluit { position:absolute; top:11px; right:11px; width:30px; height:30px; border:none; border-radius:50%; background:rgba(255,255,255,.22); color:#fff; font-size:1rem; cursor:pointer; display:grid; place-items:center; }
+    #fresh-rooster .fr-sluit:hover { background:rgba(255,255,255,.36); }
+
+    #fresh-rooster .fr-form { padding:16px 20px 18px; }
+    #fresh-rooster .fr-veld { margin-bottom:10px; }
+    #fresh-rooster .fr-veld label { display:block; font-size:.76rem; font-weight:600; color:var(--fr-tekst-zacht); margin-bottom:3px; }
+    #fresh-rooster .fr-veld input {
+      width:100%; background:#fff; border:1px solid #d1d5db; border-radius:9px; padding:9px 11px;
+      color:var(--fr-tekst); font-family:inherit; font-size:.9rem; transition:border-color .15s ease, box-shadow .15s ease;
+    }
+    #fresh-rooster .fr-veld input:focus { outline:none; border-color:var(--fr-accent); box-shadow:0 0 0 3px rgba(61,146,196,.18); }
+    #fresh-rooster .fr-hp { position:absolute; left:-9999px; opacity:0; height:0; overflow:hidden; }
+    #fresh-rooster .fr-dyn { display:none; }
+    #fresh-rooster .fr-dyn.is-visible { display:block; animation:fr-fade .2s ease; }
+    #fresh-rooster .fr-dyn-titel { margin:4px 0 8px; font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.6px; color:var(--fr-accent-dark); }
+    #fresh-rooster .fr-verstuur {
+      width:100%; margin-top:6px; border:none; cursor:pointer; font-family:inherit; font-size:.92rem; font-weight:700; color:#fff;
+      background:var(--fr-accent); padding:12px; border-radius:11px; box-shadow:0 5px 16px rgba(61,146,196,.35); transition:background .15s ease;
+    }
+    #fresh-rooster .fr-verstuur:hover { background:var(--fr-accent-dark); }
+    #fresh-rooster .fr-verstuur:disabled { opacity:.6; cursor:default; }
+    #fresh-rooster .fr-fout { margin-top:10px; font-size:.8rem; color:var(--fr-rood); text-align:center; }
+    #fresh-rooster .fr-succes { text-align:center; padding:28px 24px 34px; }
+    #fresh-rooster .fr-succes .fr-check { width:56px; height:56px; margin:0 auto 14px; border-radius:50%; background:#d1fae5; color:var(--fr-groen); display:grid; place-items:center; font-size:1.7rem; }
+    #fresh-rooster .fr-succes h3 { margin:0 0 8px; font-size:1.1rem; }
+    #fresh-rooster .fr-succes p { margin:0; color:var(--fr-tekst-zacht); font-size:.86rem; line-height:1.5; }
+
+    @media (max-width:560px) {
+      #fresh-rooster .fr-head { align-items:stretch; }
+      #fresh-rooster .fr-locs { width:100%; }
+      #fresh-rooster .fr-loc { flex:1; }
+      #fresh-rooster .fr-nav { width:100%; justify-content:space-between; }
+      #fresh-rooster .fr-weeklabel { min-width:0; flex:1; }
+      #fresh-rooster .fr-filters { width:100%; }
+      #fresh-rooster .fr-filter { flex:1; max-width:none; }
+      #fresh-rooster .fr-les { flex-wrap:wrap; gap:5px 10px; }
+      #fresh-rooster .fr-proefles, #fresh-rooster .fr-vol { margin-left:auto; }
+    }
+  </style>
+
+  <!-- =======================  OPBOUW  ======================= -->
+  <div class="fr-head">
+    <h2 class="fr-title">Lesrooster <span id="fr-titel-loc">Weert</span></h2>
+    <div class="fr-locs" id="fr-locs"></div>
+  </div>
+  <div class="fr-head">
+    <div class="fr-nav">
+      <button type="button" id="fr-vorige" aria-label="Vorige week">‹</button>
+      <div class="fr-weeklabel" id="fr-weeklabel">Deze week</div>
+      <button type="button" id="fr-volgende" aria-label="Volgende week">›</button>
+      <button type="button" class="fr-vandaag" id="fr-knop-vandaag">Vandaag</button>
+    </div>
+    <div class="fr-filters">
+      <select class="fr-filter" id="fr-filter-stijl" aria-label="Filter op dansstijl">
+        <option value="">Alle dansstijlen</option>
+      </select>
+      <select class="fr-filter" id="fr-filter-leeftijd" aria-label="Filter op leeftijd">
+        <option value="">Alle leeftijden</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="fr-inhoud">
+    <div class="fr-state"><div class="fr-spinner"></div>Rooster laden…</div>
+  </div>
+
+  <div class="fr-foot">powered by <b>Buzz<span>Flow</span></b></div>
+
+  <!-- Popup: proefles aanmelden -->
+  <div class="fr-overlay" id="fr-overlay">
+    <div class="fr-modal" role="dialog" aria-modal="true">
+      <div class="fr-modal-head">
+        <button type="button" class="fr-sluit" id="fr-sluit" aria-label="Sluiten">✕</button>
+        <h3>Proefles aanmelden</h3>
+        <div class="fr-les-sum" id="fr-les-sum"></div>
+      </div>
+
+      <form class="fr-form" id="fr-form" novalidate>
+        <!-- honeypot tegen spam (onzichtbaar) -->
+        <div class="fr-hp"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+
+        <div class="fr-veld"><label for="fr-voornaam">Voornaam leerling</label>
+          <input type="text" id="fr-voornaam" autocomplete="given-name" required></div>
+        <div class="fr-veld"><label for="fr-achternaam">Achternaam leerling</label>
+          <input type="text" id="fr-achternaam" autocomplete="family-name" required></div>
+        <div class="fr-veld"><label for="fr-leeftijd">Leeftijd leerling</label>
+          <input type="number" id="fr-leeftijd" min="1" max="120" inputmode="numeric" placeholder="bijv. 12" required></div>
+
+        <div class="fr-dyn" id="fr-volwassen">
+          <div class="fr-dyn-titel">Contactgegevens</div>
+          <div class="fr-veld"><label for="fr-tel">Telefoonnummer</label>
+            <input type="tel" id="fr-tel" autocomplete="tel" placeholder="06 12345678"></div>
+          <div class="fr-veld"><label for="fr-email">E-mailadres</label>
+            <input type="email" id="fr-email" autocomplete="email" placeholder="naam@voorbeeld.nl"></div>
+        </div>
+
+        <div class="fr-dyn" id="fr-minderjarig">
+          <div class="fr-dyn-titel">Gegevens ouder / verzorger</div>
+          <div class="fr-veld"><label for="fr-ouder-naam">Naam ouder / verzorger</label>
+            <input type="text" id="fr-ouder-naam" autocomplete="name"></div>
+          <div class="fr-veld"><label for="fr-ouder-tel">Telefoonnummer ouder / verzorger</label>
+            <input type="tel" id="fr-ouder-tel" autocomplete="tel" placeholder="06 12345678"></div>
+          <div class="fr-veld"><label for="fr-ouder-email">E-mailadres ouder / verzorger</label>
+            <input type="email" id="fr-ouder-email" autocomplete="email" placeholder="naam@voorbeeld.nl"></div>
+        </div>
+
+        <button type="submit" class="fr-verstuur" id="fr-verstuur">Proefles aanmelden</button>
+        <div class="fr-fout" id="fr-fout"></div>
+      </form>
+
+      <div class="fr-succes" id="fr-succes" style="display:none;">
+        <div class="fr-check">✓</div>
+        <h3>Aanmelding gelukt!</h3>
+        <p>De proefles staat ingepland. We nemen contact op als er iets wijzigt — tot snel in de les!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================  SCRIPT  ======================= -->
+  <script>
+  (function () {
+    "use strict";
+
+    var CONFIG = {
+      // De BuzzFlow-app die het rooster en de aanmeldingen beheert:
+      API_BASE: "https://buzzflow.nl",
+      // Locaties in de wisselknop bovenaan (volgorde = weergavevolgorde):
+      LOCATIES: ["Weert", "Stramproy"]
+    };
+
+    var DAGEN = ["maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag","zondag"];
+    var weekOffset = 0;
+    var locatie = CONFIG.LOCATIES[0];
+    var alleLessen = null; // cache
+    var geselecteerd = null;
+    var filterStijl = "";
+    var filterLeeftijd = "";
+
+    function pad(n){ return (n<10?"0":"")+n; }
+    function isoDatum(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+    function maandagVan(offset){
+      var d = new Date(); d.setHours(0,0,0,0);
+      d.setDate(d.getDate() - (d.getDay()+6)%7 + offset*7);
+      return d;
+    }
+    function eindtijd(tijd, duur){
+      var hm = tijd.split(":"); var t = (+hm[0])*60 + (+hm[1]) + (duur||60);
+      return pad(Math.floor(t/60)%24)+":"+pad(t%60);
+    }
+    function esc(s){
+      return String(s==null?"":s).replace(/[&<>"']/g, function(c){
+        return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+      });
+    }
+
+    /* ---------- Filters: dansstijl & leeftijd ---------- */
+    // "Streetdance 5-7 jaar" → stijl "Streetdance"; leeftijdsbereik [5,7]
+    function stijlVan(naam){
+      return String(naam||"")
+        .replace(/\d+\s*(?:t\/m|tot|[-–])\s*\d+\s*(?:jaar|jr|j)?\.?/gi, "")
+        .replace(/\d+\s*\+\s*(?:jaar|jr|j)?\.?/gi, "")
+        .replace(/\d+\s*(?:jaar|jr)\s*(?:en ouder)?\.?/gi, "")
+        .replace(/\s{2,}/g, " ")
+        .replace(/[\s,-]+$/, "")
+        .trim() || String(naam||"").trim();
+    }
+    function leeftijdsBereik(naam){
+      var n = String(naam||"");
+      var m = n.match(/(\d+)\s*(?:t\/m|tot|[-–])\s*(\d+)/);
+      if (m) return [ +m[1], +m[2] ];
+      m = n.match(/(\d+)\s*\+/);
+      if (m) return [ +m[1], 120 ];
+      m = n.match(/(\d+)\s*(?:jaar|jr)\s*en ouder/i);
+      if (m) return [ +m[1], 120 ];
+      return null; // geen leeftijd in de naam → altijd tonen
+    }
+    function pastBijFilters(l){
+      if (filterStijl && stijlVan(l.naam) !== filterStijl) return false;
+      if (filterLeeftijd){
+        var b = leeftijdsBereik(l.naam);
+        if (b){
+          var lf = +filterLeeftijd;
+          if (lf < b[0] || lf > b[1]) return false;
+        }
+      }
+      return true;
+    }
+    function vulFilters(lessen){
+      var stijlen = [];
+      lessen.forEach(function(l){
+        var s = stijlVan(l.naam);
+        if (s && stijlen.indexOf(s) === -1) stijlen.push(s);
+      });
+      stijlen.sort(function(a,b){ return a.localeCompare(b, "nl"); });
+      var sel = document.getElementById("fr-filter-stijl");
+      stijlen.forEach(function(s){
+        var o = document.createElement("option"); o.value = s; o.textContent = s; sel.appendChild(o);
+      });
+      var lsel = document.getElementById("fr-filter-leeftijd");
+      for (var j=3; j<=17; j++){
+        var lo = document.createElement("option"); lo.value = String(j); lo.textContent = j + " jaar"; lsel.appendChild(lo);
+      }
+      var volw = document.createElement("option"); volw.value = "18"; volw.textContent = "Volwassenen (18+)"; lsel.appendChild(volw);
+    }
+
+    /* ---------- Data ---------- */
+    function haalLessen(){
+      if (alleLessen) return Promise.resolve(alleLessen);
+      return fetch(CONFIG.API_BASE + "/api/widget/rooster")
+        .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+        .then(function(json){
+          alleLessen = json.lessen || [];
+          vulFilters(alleLessen);
+          return alleLessen;
+        });
+    }
+
+    /* ---------- Renderen ---------- */
+    function render(lessen){
+      var maandag = maandagVan(weekOffset);
+      var vandaag = new Date(); vandaag.setHours(0,0,0,0);
+      var perLocatie = lessen.filter(function(l){ return (l.locatie||"").toLowerCase() === locatie.toLowerCase(); })
+                             .filter(pastBijFilters);
+
+      var html = '<div class="fr-days">';
+      for (var i=0;i<7;i++){
+        var dagDatum = new Date(maandag); dagDatum.setDate(maandag.getDate()+i);
+        var dagNaam = DAGEN[i];
+        var vanDeDag = perLocatie.filter(function(l){ return l.dag === dagNaam; })
+                                 .sort(function(a,b){ return a.tijd.localeCompare(b.tijd); });
+        var isVandaag = dagDatum.getTime() === vandaag.getTime();
+        var voorbij = dagDatum < vandaag;
+
+        // Dagen zonder lessen alleen tonen als er geen filter actief is
+        if (vanDeDag.length === 0 && (filterStijl || filterLeeftijd)) continue;
+
+        html += '<div class="fr-day'+(isVandaag?' is-vandaag':'')+'" style="animation-delay:'+(i*0.03)+'s">';
+        html +=   '<div class="fr-day-head"><span class="fr-day-name">'+dagNaam+'</span>';
+        html +=   '<span class="fr-day-date">'+dagDatum.getDate()+' '+dagDatum.toLocaleDateString("nl-NL",{month:"long"})+'</span>';
+        if (isVandaag) html += '<span class="fr-badge-vandaag">vandaag</span>';
+        html +=   '</div>';
+
+        if (vanDeDag.length === 0){
+          html += '<div class="fr-leeg">Geen lessen op deze dag</div>';
+        } else {
+          vanDeDag.forEach(function(l){
+            html += '<div class="fr-les">';
+            html +=   '<div class="fr-tijd">'+esc(l.tijd)+'<small>tot '+esc(eindtijd(l.tijd, l.duurMinuten))+'</small></div>';
+            html +=   '<div class="fr-info"><div class="fr-les-naam">'+esc(l.naam)+'</div>';
+            html +=   '<div class="fr-les-meta">docent '+esc(l.docent||"—")+'</div></div>';
+            if (l.vol){
+              html += '<span class="fr-vol" title="Deze les zit vol">VOL</span>';
+            } else if (voorbij){
+              html += '<span class="fr-geweest">geweest</span>';
+            } else {
+              html += '<button type="button" class="fr-proefles" data-les="'+esc(l.id)+'" data-datum="'+isoDatum(dagDatum)+'">Proefles</button>';
+            }
+            html += '</div>';
+          });
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+      if (html === '<div class="fr-days"></div>'){
+        html = '<div class="fr-state">Geen lessen gevonden met deze filters.</div>';
+      }
+      document.getElementById("fr-inhoud").innerHTML = html;
+
+      var zondag = new Date(maandag); zondag.setDate(maandag.getDate()+6);
+      var label = weekOffset===0 ? "Deze week" : weekOffset===1 ? "Volgende week" : weekOffset===-1 ? "Vorige week"
+        : maandag.getDate()+" "+maandag.toLocaleDateString("nl-NL",{month:"short"})+" – "+zondag.getDate()+" "+zondag.toLocaleDateString("nl-NL",{month:"short"});
+      document.getElementById("fr-weeklabel").textContent = label;
+    }
+
+    function toonFout(msg){
+      document.getElementById("fr-inhoud").innerHTML =
+        '<div class="fr-state">⚠️ Het rooster kon niet worden geladen.<br><small>'+esc(msg)+'</small></div>';
+    }
+    function laad(){
+      document.getElementById("fr-inhoud").innerHTML = '<div class="fr-state"><div class="fr-spinner"></div>Rooster laden…</div>';
+      haalLessen().then(render).catch(function(e){ toonFout(e.message||String(e)); });
+    }
+
+    /* ---------- Locatie-tabs ---------- */
+    var locsEl = document.getElementById("fr-locs");
+    CONFIG.LOCATIES.forEach(function(naam){
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "fr-loc" + (naam===locatie ? " is-actief" : ""); b.textContent = naam;
+      b.onclick = function(){
+        locatie = naam;
+        document.getElementById("fr-titel-loc").textContent = naam;
+        var knoppen = locsEl.querySelectorAll(".fr-loc");
+        for (var i=0;i<knoppen.length;i++) knoppen[i].classList.toggle("is-actief", knoppen[i].textContent===naam);
+        laad();
+      };
+      locsEl.appendChild(b);
+    });
+
+    /* ---------- Filter-events ---------- */
+    var stijlSel = document.getElementById("fr-filter-stijl");
+    var leeftijdSel = document.getElementById("fr-filter-leeftijd");
+    stijlSel.addEventListener("change", function(){
+      filterStijl = stijlSel.value;
+      stijlSel.classList.toggle("is-actief", !!filterStijl);
+      laad();
+    });
+    leeftijdSel.addEventListener("change", function(){
+      filterLeeftijd = leeftijdSel.value;
+      leeftijdSel.classList.toggle("is-actief", !!filterLeeftijd);
+      laad();
+    });
+
+    /* ---------- Modal ---------- */
+    var overlay = document.getElementById("fr-overlay");
+    var form = document.getElementById("fr-form");
+    var succesEl = document.getElementById("fr-succes");
+    var foutEl = document.getElementById("fr-fout");
+    var leeftijd = document.getElementById("fr-leeftijd");
+
+    function openModal(lesId, datum){
+      var les = (alleLessen||[]).filter(function(l){ return l.id===lesId; })[0];
+      if (!les) return;
+      geselecteerd = { les: les, datum: datum };
+      var d = new Date(datum+"T12:00:00");
+      document.getElementById("fr-les-sum").innerHTML =
+        '<b>'+esc(les.naam)+'</b><br>'
+        + d.toLocaleDateString("nl-NL",{weekday:"long", day:"numeric", month:"long"})
+        + ' · ' + esc(les.tijd) + '–' + esc(eindtijd(les.tijd, les.duurMinuten))
+        + (les.docent ? '<br>docent ' + esc(les.docent) : '');
+      form.style.display = ""; succesEl.style.display = "none";
+      form.reset(); wisselLeeftijdsvelden(); foutEl.textContent = "";
+      overlay.classList.add("is-open");
+      document.body.style.overflow = "hidden";
+    }
+    function sluitModal(){ overlay.classList.remove("is-open"); document.body.style.overflow = ""; }
+
+    function wisselLeeftijdsvelden(){
+      var v = parseInt(leeftijd.value, 10);
+      var volwassen = !isNaN(v) && v >= 18;
+      var minderjarig = !isNaN(v) && v >= 1 && v < 18;
+      zetVelden("fr-volwassen", volwassen);
+      zetVelden("fr-minderjarig", minderjarig);
+    }
+    function zetVelden(id, aan){
+      var box = document.getElementById(id);
+      box.classList.toggle("is-visible", aan);
+      var ins = box.querySelectorAll("input");
+      for (var i=0;i<ins.length;i++){ if (aan) ins[i].setAttribute("required","required"); else ins[i].removeAttribute("required"); }
+    }
+    leeftijd.addEventListener("input", wisselLeeftijdsvelden);
+
+    document.getElementById("fr-inhoud").addEventListener("click", function(e){
+      var btn = e.target.closest ? e.target.closest(".fr-proefles") : null;
+      if (btn) openModal(btn.getAttribute("data-les"), btn.getAttribute("data-datum"));
+    });
+    document.getElementById("fr-sluit").onclick = sluitModal;
+    overlay.addEventListener("click", function(e){ if (e.target === overlay) sluitModal(); });
+    document.addEventListener("keydown", function(e){ if (e.key==="Escape" && overlay.classList.contains("is-open")) sluitModal(); });
+
+    /* ---------- Versturen ---------- */
+    function val(id){ return (document.getElementById(id).value || "").trim(); }
+
+    form.addEventListener("submit", function(e){
+      e.preventDefault();
+      if (!form.checkValidity()){ form.reportValidity(); return; }
+      var v = parseInt(leeftijd.value, 10);
+      var minderjarig = v < 18;
+
+      var payload = {
+        lesId: geselecteerd.les.id,
+        datum: geselecteerd.datum,
+        voornaam: val("fr-voornaam"),
+        achternaam: val("fr-achternaam"),
+        leeftijd: leeftijd.value,
+        telefoon: minderjarig ? val("fr-ouder-tel") : val("fr-tel"),
+        email: minderjarig ? val("fr-ouder-email") : val("fr-email"),
+        ouderNaam: minderjarig ? val("fr-ouder-naam") : "",
+        website: form.querySelector('[name="website"]').value
+      };
+
+      var knop = document.getElementById("fr-verstuur");
+      knop.disabled = true; knop.textContent = "Versturen…"; foutEl.textContent = "";
+
+      fetch(CONFIG.API_BASE + "/api/widget/proefles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).then(function(r){
+        return r.json().then(function(json){ return { ok: r.ok, json: json }; });
+      }).then(function(res){
+        if (!res.ok) throw new Error(res.json.error || "Er ging iets mis.");
+        form.style.display = "none"; succesEl.style.display = "";
+        alleLessen = null; // rooster verversen bij volgende weergave
+      }).catch(function(err){
+        foutEl.textContent = err.message || "Versturen lukte niet — probeer het later opnieuw.";
+      });
+
+      setTimeout(function(){ knop.disabled = false; knop.textContent = "Proefles aanmelden"; }, 1500);
+    });
+
+    /* ---------- Init ---------- */
+    document.getElementById("fr-vorige").onclick = function(){ weekOffset--; laad(); };
+    document.getElementById("fr-volgende").onclick = function(){ weekOffset++; laad(); };
+    document.getElementById("fr-knop-vandaag").onclick = function(){ weekOffset=0; laad(); };
+    laad();
+  })();
+  </script>
+</div>
+
