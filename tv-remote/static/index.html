@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TV Remote">
+<meta name="theme-color" content="#0f1115">
+<title>TV Remote</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #181b22; --btn: #232733; --btn-active: #313645;
+    --text: #e8eaf0; --muted: #8b90a0; --accent: #3b82f6; --green: #22c55e;
+    --red: #ef4444; --yellow: #eab308; --blue: #3b82f6;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-user-select: none; user-select: none; overscroll-behavior: none; }
+  body { padding: calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 24px); max-width: 440px; margin: 0 auto; }
+
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  #status { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  #dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); display: inline-block; }
+  #dot.connected { background: var(--green); } #dot.error { background: var(--red); } #dot.pairing, #dot.connecting { background: var(--yellow); }
+  #gear { background: none; border: 0; color: var(--muted); font-size: 22px; padding: 4px 8px; }
+
+  .panel { background: var(--panel); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
+  .panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+  .hidden { display: none !important; }
+
+  button.k { background: var(--btn); color: var(--text); border: 0; border-radius: 14px;
+    font-size: 17px; font-weight: 500; height: 56px; width: 100%; touch-action: manipulation;
+    display: flex; align-items: center; justify-content: center; gap: 6px; }
+  button.k:active, button.k.held { background: var(--btn-active); transform: scale(.97); }
+  button.k.small { height: 48px; font-size: 15px; }
+  button.k.primary { background: var(--accent); color: #fff; }
+  button.k.danger { color: var(--red); }
+  .row { display: grid; gap: 10px; margin-bottom: 10px; }
+  .row:last-child { margin-bottom: 0; }
+  .c3 { grid-template-columns: repeat(3, 1fr); } .c4 { grid-template-columns: repeat(4, 1fr); }
+  .c5 { grid-template-columns: repeat(5, 1fr); } .c2 { grid-template-columns: repeat(2, 1fr); }
+
+  /* D-pad */
+  .dpad { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
+    gap: 8px; aspect-ratio: 1; max-width: 260px; margin: 0 auto 12px; }
+  .dpad button.k { height: 100%; font-size: 26px; border-radius: 18px; }
+  .dpad .ok { background: var(--accent); color: #fff; font-size: 18px; font-weight: 700; border-radius: 50%; }
+  .dpad .blank { visibility: hidden; }
+
+  /* Volume / kanaal kolommen */
+  .rocker { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .rocker .col { display: flex; flex-direction: column; gap: 6px; background: var(--btn); border-radius: 18px; padding: 6px; }
+  .rocker .col button.k { background: transparent; height: 52px; }
+  .rocker .col button.k:active { background: var(--btn-active); }
+  .rocker .col .lbl { text-align: center; font-size: 12px; color: var(--muted); }
+
+  .colors button.k { height: 22px; border-radius: 8px; }
+  .colors .r { background: var(--red); } .colors .g { background: var(--green); }
+  .colors .y { background: var(--yellow); } .colors .b { background: var(--blue); }
+
+  input[type=text] { width: 100%; height: 48px; border-radius: 12px; border: 1px solid #2c3040; background: var(--bg);
+    color: var(--text); font-size: 16px; padding: 0 12px; -webkit-user-select: text; user-select: text; }
+  .inline { display: flex; gap: 8px; }
+  .inline input { flex: 1; } .inline button.k { width: auto; padding: 0 18px; height: 48px; font-size: 15px; }
+  .msg { font-size: 13px; color: var(--muted); margin-top: 8px; min-height: 16px; }
+  .apps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .apps button.k { height: 46px; font-size: 14px; }
+  #toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 20px); transform: translateX(-50%);
+    background: #2b2f3a; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  #toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<header>
+  <h1>TV Remote</h1>
+  <div id="status"><span id="dot"></span><span id="statusText">…</span></div>
+  <button id="gear" title="Instellingen">⚙︎</button>
+</header>
+
+<section class="panel hidden" id="settings">
+  <h2>Verbinding</h2>
+  <div class="inline">
+    <input type="text" id="host" placeholder="IP-adres van de TV-box, bijv. 192.168.1.50" inputmode="decimal" autocapitalize="off" autocorrect="off">
+    <button class="k primary" id="connectBtn">Verbind</button>
+  </div>
+  <div class="inline hidden" id="pairRow" style="margin-top:8px">
+    <input type="text" id="code" placeholder="Code op TV-scherm" autocapitalize="characters" autocorrect="off" maxlength="8">
+    <button class="k primary" id="pairBtn">Koppel</button>
+  </div>
+  <div class="msg" id="msg"></div>
+  <div class="msg" id="device"></div>
+</section>
+
+<section class="panel">
+  <div class="row c3">
+    <button class="k danger" data-key="POWER">⏻</button>
+    <button class="k" data-key="HOME">⌂ Home</button>
+    <button class="k" data-key="BACK">← Terug</button>
+  </div>
+  <div class="dpad">
+    <button class="k blank"></button>
+    <button class="k" data-key="DPAD_UP" data-repeat>▲</button>
+    <button class="k blank"></button>
+    <button class="k" data-key="DPAD_LEFT" data-repeat>◀</button>
+    <button class="k ok" data-key="DPAD_CENTER">OK</button>
+    <button class="k" data-key="DPAD_RIGHT" data-repeat>▶</button>
+    <button class="k blank"></button>
+    <button class="k" data-key="DPAD_DOWN" data-repeat>▼</button>
+    <button class="k blank"></button>
+  </div>
+  <div class="rocker">
+    <div class="col">
+      <button class="k" data-key="VOLUME_UP" data-repeat>＋</button>
+      <div class="lbl">Volume<span id="vol"></span></div>
+      <button class="k" data-key="VOLUME_DOWN" data-repeat>－</button>
+    </div>
+    <div class="col" style="justify-content:center">
+      <button class="k" data-key="VOLUME_MUTE">🔇</button>
+      <div class="lbl">Mute</div>
+      <button class="k" data-key="TV">TV</button>
+    </div>
+    <div class="col">
+      <button class="k" data-key="CHANNEL_UP" data-repeat>＋</button>
+      <div class="lbl">Zender</div>
+      <button class="k" data-key="CHANNEL_DOWN" data-repeat>－</button>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Media</h2>
+  <div class="row c5">
+    <button class="k small" data-key="MEDIA_REWIND">⏪</button>
+    <button class="k small" data-key="MEDIA_PLAY_PAUSE">⏯</button>
+    <button class="k small" data-key="MEDIA_STOP">⏹</button>
+    <button class="k small" data-key="MEDIA_FAST_FORWARD">⏩</button>
+    <button class="k small" data-key="MEDIA_RECORD">⏺</button>
+  </div>
+  <div class="row c4">
+    <button class="k small" data-key="GUIDE">Gids</button>
+    <button class="k small" data-key="INFO">Info</button>
+    <button class="k small" data-key="MENU">Menu</button>
+    <button class="k small" data-key="SETTINGS">⚙︎</button>
+  </div>
+  <div class="row c4 colors">
+    <button class="k r" data-key="PROG_RED"></button>
+    <button class="k g" data-key="PROG_GREEN"></button>
+    <button class="k y" data-key="PROG_YELLOW"></button>
+    <button class="k b" data-key="PROG_BLUE"></button>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Zendernummer</h2>
+  <div class="row c3" id="numpad">
+    <button class="k small" data-key="1">1</button><button class="k small" data-key="2">2</button><button class="k small" data-key="3">3</button>
+    <button class="k small" data-key="4">4</button><button class="k small" data-key="5">5</button><button class="k small" data-key="6">6</button>
+    <button class="k small" data-key="7">7</button><button class="k small" data-key="8">8</button><button class="k small" data-key="9">9</button>
+    <button class="k small" data-key="DEL">⌫</button><button class="k small" data-key="0">0</button><button class="k small" data-key="ENTER">↵</button>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Tekst typen</h2>
+  <div class="inline">
+    <input type="text" id="text" placeholder="Zoekterm of tekst…">
+    <button class="k primary" id="sendText">Stuur</button>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Apps</h2>
+  <div class="apps" id="apps"></div>
+</section>
+
+<div id="toast"></div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const dot = $('#dot'), statusText = $('#statusText'), settings = $('#settings');
+  const hostInput = $('#host'), codeInput = $('#code'), pairRow = $('#pairRow');
+  const msg = $('#msg'), device = $('#device'), vol = $('#vol'), appsEl = $('#apps');
+  let lastState = null, appsRendered = '';
+
+  const toast = (t) => { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 1800); };
+  const post = async (url, body) => {
+    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+    if (!r.ok) { toast(await r.text()); throw new Error('request failed'); }
+    return r.json();
+  };
+
+  const labels = { idle: 'Niet verbonden', connecting: 'Verbinden…', pairing: 'Koppelen', connected: 'Verbonden', error: 'Fout' };
+  function render(s) {
+    dot.className = s.state;
+    let t = labels[s.state] || s.state;
+    if (s.state === 'connected' && s.is_on !== null) t += s.is_on ? ' · aan' : ' · uit';
+    statusText.textContent = t;
+    msg.textContent = s.message || '';
+    device.textContent = s.device ? `${s.device.manufacturer || ''} ${s.device.model || ''} (Android ${s.device.sw_version || '?'})`.trim() : '';
+    vol.textContent = s.volume ? ` ${s.volume.muted ? '🔇' : s.volume.level}` : '';
+    pairRow.classList.toggle('hidden', s.state !== 'pairing');
+    if (document.activeElement !== hostInput && s.host) hostInput.value = s.host;
+    if (s.state !== lastState) {
+      if (s.state === 'pairing') { settings.classList.remove('hidden'); setTimeout(() => codeInput.focus(), 50); }
+      if (s.state === 'idle' || s.state === 'error') settings.classList.remove('hidden');
+      lastState = s.state;
+    }
+    const key = JSON.stringify(s.apps || {});
+    if (key !== appsRendered) {
+      appsRendered = key; appsEl.innerHTML = '';
+      for (const [name, id] of Object.entries(s.apps || {})) {
+        const b = document.createElement('button'); b.className = 'k'; b.textContent = name;
+        b.addEventListener('click', () => post('/api/launch', { app: id }).catch(() => {}));
+        appsEl.appendChild(b);
+      }
+    }
+  }
+  async function poll() {
+    try { render(await (await fetch('/api/status')).json()); }
+    catch { dot.className = 'error'; statusText.textContent = 'Server onbereikbaar'; }
+  }
+  poll(); setInterval(poll, 2000);
+
+  // Knoppen: tik = korte druk; ingedrukt houden op pijltjes/volume = herhalen.
+  const sendKey = (key, direction = 'SHORT') => post('/api/key', { key, direction }).catch(() => {});
+  document.querySelectorAll('button[data-key]').forEach((b) => {
+    const key = b.dataset.key, repeat = b.hasAttribute('data-repeat');
+    let timer = null, fired = false;
+    const start = (e) => {
+      e.preventDefault(); fired = false; b.classList.add('held');
+      if (repeat) {
+        timer = setTimeout(() => { fired = true; sendKey(key); timer = setInterval(() => sendKey(key), 180); }, 350);
+      }
+    };
+    const end = (e) => {
+      e.preventDefault(); b.classList.remove('held');
+      if (timer) { clearTimeout(timer); clearInterval(timer); timer = null; }
+      if (!fired) sendKey(key);
+      fired = false;
+    };
+    b.addEventListener('touchstart', start, { passive: false });
+    b.addEventListener('touchend', end, { passive: false });
+    b.addEventListener('touchcancel', () => { b.classList.remove('held'); if (timer) { clearTimeout(timer); clearInterval(timer); timer = null; } fired = false; });
+    b.addEventListener('mousedown', start);
+    b.addEventListener('mouseup', end);
+  });
+
+  $('#gear').addEventListener('click', () => settings.classList.toggle('hidden'));
+  $('#connectBtn').addEventListener('click', async () => {
+    msg.textContent = 'Verbinden…';
+    render(await post('/api/connect', { host: hostInput.value.trim() }).catch(() => ({ state: 'error', message: 'Verbinden mislukt' })));
+  });
+  $('#pairBtn').addEventListener('click', async () => {
+    const code = codeInput.value.trim(); if (!code) return;
+    render(await post('/api/pair', { code }).catch(() => ({ state: 'error', message: 'Koppelen mislukt' })));
+    codeInput.value = '';
+  });
+  codeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#pairBtn').click(); });
+  const textInput = $('#text');
+  const sendText = () => { const t = textInput.value; if (!t) return; post('/api/text', { text: t }).then(() => { textInput.value = ''; toast('Verstuurd'); }).catch(() => {}); };
+  $('#sendText').addEventListener('click', sendText);
+  textInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendText(); });
+})();
+</script>
+</body>
+</html>
