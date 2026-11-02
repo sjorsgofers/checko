@@ -54,6 +54,29 @@ herstelt de verbinding zelf als de TV uit en weer aan gaat.
   `config.json` (naam → package-id). Package-id's vind je op de Play Store-
   pagina van een app in de URL na `id=`.
 
+## Via Tailscale
+
+Gebruik je Tailscale, dan hoef je geen firewallregel te maken en werkt de
+afstandsbediening ook buitenshuis. Let op: Safari opent `*.ts.net`-namen
+altijd via HTTPS, dus `http://pc-naam.tailnet.ts.net:8080` werkt niet.
+
+- **Simpel:** gebruik het Tailscale-IP van de pc (begint met `100.`):
+  `http://100.x.y.z:8080`
+- **Netjes:** laat Tailscale HTTPS verzorgen. Op de pc in een opdrachtprompt:
+
+  ```
+  tailscale serve --bg 8080
+  ```
+
+  Open daarna op de iPhone `https://<pc-naam>.<tailnet>.ts.net` (zonder
+  poortnummer). Klaagt het commando dat HTTPS uitstaat, zet dan in de
+  Tailscale-beheerconsole onder DNS → HTTPS Certificates de certificaten aan.
+  `tailscale serve status` toont de actieve doorsturing; `tailscale serve reset`
+  zet hem weer uit.
+
+De pc moet zelf via het thuisnetwerk bij de TV-box kunnen; Tailscale is alleen
+de weg van je iPhone naar de pc.
+
 ## Automatisch starten met Windows
 
 1. Druk op Win+R, typ `shell:startup`, Enter.
